@@ -13,7 +13,6 @@ impl<T> RootedValue<T> {
         BOXROOT_SETUP.call_once(|| unsafe {
             ocaml_boxroot_sys::boxroot_setup();
         });
-
         RootedValue {
             root: unsafe { ocaml_boxroot_sys::boxroot_create(v) },
             phantom_data: std::marker::PhantomData,

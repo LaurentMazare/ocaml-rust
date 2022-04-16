@@ -1,78 +1,60 @@
-pub trait ToValue {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U;
+use crate::RootedValue;
+
+pub trait ToValue: Sized {
+    /// It's the responsability of callers to `to_value` to immediately make the
+    /// returned value reachable from an OCaml root, for instance by using
+    /// `crate::RootedValue::create`, or by setting it in a field of a reachable
+    /// object.
+    fn to_value(&self) -> ocaml_sys::Value;
+}
+
+pub fn to_rooted_value<T>(t: &T) -> crate::RootedValue<T>
+where
+    T: ToValue,
+{
+    crate::RootedValue::create(t.to_value())
 }
 
 impl ToValue for () {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
-        pin(ocaml_sys::UNIT)
+    fn to_value(&self) -> ocaml_sys::Value {
+        ocaml_sys::UNIT
     }
 }
 
 impl ToValue for i32 {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
-        pin(unsafe { ocaml_sys::caml_copy_int32(*self) })
+    fn to_value(&self) -> ocaml_sys::Value {
+        unsafe { ocaml_sys::caml_copy_int32(*self) }
     }
 }
 
 impl ToValue for i64 {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
-        pin(unsafe { ocaml_sys::caml_copy_int64(*self) })
+    fn to_value(&self) -> ocaml_sys::Value {
+        unsafe { ocaml_sys::caml_copy_int64(*self) }
     }
 }
 
 impl ToValue for f64 {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
-        pin(unsafe { ocaml_sys::caml_copy_double(*self) })
+    fn to_value(&self) -> ocaml_sys::Value {
+        unsafe { ocaml_sys::caml_copy_double(*self) }
     }
 }
 
 impl ToValue for isize {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
-        pin(unsafe { ocaml_sys::val_int(*self) })
+    fn to_value(&self) -> ocaml_sys::Value {
+        unsafe { ocaml_sys::val_int(*self) }
     }
 }
 
 impl ToValue for usize {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
-        pin(unsafe { ocaml_sys::val_int(*self as isize) })
+    fn to_value(&self) -> ocaml_sys::Value {
+        unsafe { ocaml_sys::val_int(*self as isize) }
     }
 }
 
 impl ToValue for bool {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
+    fn to_value(&self) -> ocaml_sys::Value {
         let v = if *self { 1 } else { 0 };
-        pin(unsafe { ocaml_sys::val_int(v) })
+        unsafe { ocaml_sys::val_int(v) }
     }
 }
 
@@ -81,17 +63,15 @@ where
     T1: ToValue,
     T2: ToValue,
 {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
+    fn to_value(&self) -> ocaml_sys::Value {
         let (v1, v2) = self;
-        let v = unsafe { ocaml_sys::caml_alloc_tuple(2) };
-        let res = pin(v);
-        T1::to_value(v1, |x| unsafe { ocaml_sys::store_field(v, 0, x) });
-        T2::to_value(v2, |x| unsafe { ocaml_sys::store_field(v, 1, x) });
-        res
+        let t = unsafe { ocaml_sys::caml_alloc_tuple(2) };
+        let rv: RootedValue<()> = RootedValue::create(t);
+        let v1 = T1::to_value(v1);
+        unsafe { ocaml_sys::store_field(rv.value().value, 0, v1) };
+        let v2 = T2::to_value(v2);
+        unsafe { ocaml_sys::store_field(rv.value().value, 1, v2) };
+        rv.value().value
     }
 }
 
@@ -101,18 +81,17 @@ where
     T2: ToValue,
     T3: ToValue,
 {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
+    fn to_value(&self) -> ocaml_sys::Value {
         let (v1, v2, v3) = self;
-        let v = unsafe { ocaml_sys::caml_alloc_tuple(3) };
-        let res = pin(v);
-        T1::to_value(v1, |x| unsafe { ocaml_sys::store_field(v, 0, x) });
-        T2::to_value(v2, |x| unsafe { ocaml_sys::store_field(v, 1, x) });
-        T3::to_value(v3, |x| unsafe { ocaml_sys::store_field(v, 2, x) });
-        res
+        let t = unsafe { ocaml_sys::caml_alloc_tuple(3) };
+        let rv: RootedValue<()> = RootedValue::create(t);
+        let v1 = T1::to_value(v1);
+        unsafe { ocaml_sys::store_field(rv.value().value, 0, v1) };
+        let v2 = T2::to_value(v2);
+        unsafe { ocaml_sys::store_field(rv.value().value, 1, v2) };
+        let v3 = T3::to_value(v3);
+        unsafe { ocaml_sys::store_field(rv.value().value, 2, v3) };
+        rv.value().value
     }
 }
 
@@ -120,18 +99,14 @@ impl<T> ToValue for Vec<T>
 where
     T: ToValue,
 {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
+    fn to_value(&self) -> ocaml_sys::Value {
         let len = self.len();
-        let array = unsafe { ocaml_sys::caml_alloc_tuple(len) };
-        let res = pin(array);
+        let rv: RootedValue<()> = RootedValue::create(unsafe { ocaml_sys::caml_alloc_tuple(len) });
         for (i, v) in self.iter().enumerate() {
-            T::to_value(v, |x| unsafe { ocaml_sys::store_field(array, i, x) })
+            let v = T::to_value(v);
+            unsafe { ocaml_sys::store_field(rv.value().value, i, v) }
         }
-        res
+        rv.value().value
     }
 }
 
@@ -139,18 +114,16 @@ impl<T> ToValue for Option<T>
 where
     T: ToValue,
 {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
+    fn to_value(&self) -> ocaml_sys::Value {
         match self {
-            None => pin(ocaml_sys::NONE),
+            None => ocaml_sys::NONE,
             Some(some) => {
-                let v = unsafe { ocaml_sys::caml_alloc(1, ocaml_sys::TAG_SOME) };
-                let res = pin(v);
-                T::to_value(some, |x| unsafe { ocaml_sys::store_field(v, 0, x) });
-                res
+                let rv: RootedValue<()> =
+                    RootedValue::create(unsafe { ocaml_sys::caml_alloc(1, ocaml_sys::TAG_SOME) });
+                let some = T::to_value(some);
+                unsafe { ocaml_sys::store_field(rv.value().value, 0, some) };
+
+                rv.value().value
             }
         }
     }
@@ -171,13 +144,8 @@ impl<T> ToValue for Box<T>
 where
     T: ToValue,
 {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
-        let s = &*self;
-        T::to_value(s, pin)
+    fn to_value(&self) -> ocaml_sys::Value {
+        T::to_value(&*self)
     }
 }
 
@@ -186,59 +154,42 @@ where
     T: ToValue,
     E: ToValue,
 {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
+    fn to_value(&self) -> ocaml_sys::Value {
         match self {
             Err(err) => {
-                let v = unsafe { ocaml_sys::caml_alloc(1, 1) };
-                let res = pin(v);
-                E::to_value(err, |x| unsafe { ocaml_sys::store_field(v, 0, x) });
-                res
+                let rv: RootedValue<()> =
+                    RootedValue::create(unsafe { ocaml_sys::caml_alloc(1, 1) });
+                let err = E::to_value(err);
+                unsafe { ocaml_sys::store_field(rv.value().value, 0, err) };
+                rv.value().value
             }
             Ok(ok) => {
-                let v = unsafe { ocaml_sys::caml_alloc(1, 0) };
-                let res = pin(v);
-                T::to_value(ok, |x| unsafe { ocaml_sys::store_field(v, 0, x) });
-                res
+                let rv: RootedValue<()> =
+                    RootedValue::create(unsafe { ocaml_sys::caml_alloc(1, 0) });
+                let ok = T::to_value(ok);
+                unsafe { ocaml_sys::store_field(rv.value().value, 0, ok) };
+                rv.value().value
             }
         }
     }
 }
 
 impl ToValue for Vec<u8> {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
-        let v = unsafe { ocaml_sys::caml_alloc_string(self.len()) };
-        let res = pin(v);
-        let content_ptr = unsafe { ocaml_sys::string_val(v) };
+    fn to_value(&self) -> ocaml_sys::Value {
+        let rv: RootedValue<()> =
+            RootedValue::create(unsafe { ocaml_sys::caml_alloc_string(self.len()) });
+        let content_ptr = unsafe { ocaml_sys::string_val(rv.value().value) };
         unsafe { std::ptr::copy_nonoverlapping(self.as_ptr(), content_ptr, self.len()) };
-        res
+        rv.value().value
     }
 }
 
 impl ToValue for String {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
-        let v = unsafe { ocaml_sys::caml_alloc_string(self.len()) };
-        let res = pin(v);
-        let content_ptr = unsafe { ocaml_sys::string_val(v) };
+    fn to_value(&self) -> ocaml_sys::Value {
+        let rv: RootedValue<Self> =
+            RootedValue::create(unsafe { ocaml_sys::caml_alloc_string(self.len()) });
+        let content_ptr = unsafe { ocaml_sys::string_val(rv.value().value) };
         unsafe { std::ptr::copy_nonoverlapping(self.as_ptr(), content_ptr, self.len()) };
-        res
+        rv.value().value
     }
-}
-
-pub fn to_rooted_value<T>(t: &T) -> crate::RootedValue<T>
-where
-    T: ToValue,
-{
-    t.to_value(crate::RootedValue::create)
 }

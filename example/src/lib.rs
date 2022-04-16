@@ -167,30 +167,27 @@ fn foo2_to_string(v: &Custom<Foo>) -> String {
     format!("v: {:?}", v)
 }
 
-struct Compact();
+struct CompactToken();
 
-impl ocaml_rust::to_value::ToValue for Compact {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
+impl ocaml_rust::to_value::ToValue for CompactToken {
+    fn to_value(&self) -> ocaml_sys::Value {
         unsafe {
             ocaml_sys::caml_gc_compaction(ocaml_sys::UNIT);
-            pin(ocaml_sys::UNIT)
+            ocaml_sys::UNIT
         }
     }
 }
 
 #[ocaml_rust::bridge]
-mod ffi6 {
+mod ffi7 {
+    type Compact = CompactToken;
     extern "Rust" {
-        fn generate(i: isize) -> ((((isize, isize), Compact), isize), isize);
+        fn generate(i: isize) -> ((((i64, i64), Compact), i64), i64);
     }
 }
 
-fn generate(i0: isize) -> ((((isize, isize), Compact), isize), isize) {
-    let mut i = i0;
+fn generate(i0: isize) -> ((((i64, i64), CompactToken), i64), i64) {
+    let mut i = i0 as i64;
     let d = i % 1000;
     i /= 1000;
     let c = i % 1000;
@@ -199,5 +196,5 @@ fn generate(i0: isize) -> ((((isize, isize), Compact), isize), isize) {
     i /= 1000;
     let a = i;
     println!("Rust: {} {} {} {} {}", i0, a, b, c, d);
-    ((((a, b), Compact()), c), d)
+    ((((a, b), CompactToken()), c), d)
 }

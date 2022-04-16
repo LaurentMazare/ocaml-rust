@@ -21,7 +21,10 @@ let%expect_test _ =
   for i = 1 to 10 do
     Ffi2.vec_push v i
   done;
-  let array = Ffi2.vec_content v |> Array.map ~f:Int64.to_int_exn in
+  Caml.Gc.compact ();
+  let array = Ffi2.vec_content v in
+  Caml.Gc.compact ();
+  let array = Array.map array ~f:Int64.to_int_exn in
   Stdio.print_s ([%sexp_of: int array] array);
   [%expect {| (1 2 3 4 5 6 7 8 9 10) |}];
   Stdio.print_s (Ffi.option_result (Some 1) "foo" |> [%sexp_of: int res]);
@@ -116,10 +119,10 @@ let%expect_test _ =
 
 let%expect_test _ =
   Stdio.printf "\n==== Test GC Safety ====\n";
-  let (((a, b), _c), d), e = Ffi6.generate 1664 in
-  Stdio.printf "%i %i %i %i\n" a b d e;
+  let (((a, b), _c), d), e = Ffi7.generate 1664 in
+  Stdio.printf "%Ld %Ld %Ld %Ld\n" a b d e;
   [%expect {|
     Rust: 1664 0 0 1 664
 
     ==== Test GC Safety ====
-    0 0 0 0 |}]
+    0 0 1 664 |}]

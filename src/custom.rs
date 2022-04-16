@@ -63,11 +63,7 @@ impl<T> Custom<T> {
 }
 
 impl<T: 'static> crate::to_value::ToValue for Custom<T> {
-    fn to_value<F, U>(&self, pin: F) -> U
-    where
-        U: Sized,
-        F: FnOnce(ocaml_sys::Value) -> U,
-    {
+    fn to_value(&self) -> ocaml_sys::Value {
         let box_: Box<Box<dyn std::any::Any>> = Box::new(Box::new(self._inner.clone()));
         let boxed_t = Box::into_raw(box_);
         let sys_value = unsafe {
@@ -80,7 +76,7 @@ impl<T: 'static> crate::to_value::ToValue for Custom<T> {
         };
         let ptr = unsafe { ocaml_sys::field(sys_value, 1) } as *mut _;
         unsafe { std::ptr::write(ptr, boxed_t) };
-        pin(sys_value)
+        sys_value
     }
 }
 

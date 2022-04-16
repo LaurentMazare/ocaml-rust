@@ -108,7 +108,7 @@ fn expand_enum(item: &syn::ItemEnum, expanded: &mut proc_macro2::TokenStream) ->
                     let current_index = const_index;
                     const_index += 1;
                     quote! {
-                        Self::#variant_ident => pin(unsafe { ocaml_sys::val_int(#current_index) })
+                        Self::#variant_ident => unsafe { ocaml_sys::val_int(#current_index) }
                     }
                 }
                 syn::Fields::Named(n) => {
@@ -118,22 +118,21 @@ fn expand_enum(item: &syn::ItemEnum, expanded: &mut proc_macro2::TokenStream) ->
                     let mut fields: Vec<proc_macro2::TokenStream> = Vec::new();
                     let mut set_fields: Vec<proc_macro2::TokenStream> = Vec::new();
                     for (field_idx, field) in n.named.iter().enumerate() {
+                        let tmp_ident = syn::Ident::new(&format!("_tmp{}", field_idx), n.span());
                         let field_ident = &field.ident;
                         let ty = &field.ty;
                         fields.push(quote! { #field_ident });
                         set_fields.push(quote! {
-                            <#ty as ocaml_rust::to_value::ToValue>::to_value(
-                                #field_ident,
-                                |x| unsafe { ocaml_sys::store_field(v, #field_idx, x) },
-                            );
+                            let #tmp_ident = <#ty as ocaml_rust::to_value::ToValue>::to_value(#field_ident);
+                            unsafe { ocaml_sys::store_field(rv.value().value, #field_idx, #tmp_ident)};
                         })
                     }
                     quote! {
                         Self::#variant_ident{#(#fields,)*} => {
                             let v = unsafe { ocaml_sys::caml_alloc(#nfields, #current_index) };
-                            let res = pin(v);
+                            let rv : ocaml_rust::RootedValue<()> = ocaml_rust::RootedValue::create(v);
                             #(#set_fields)*
-                            res
+                            rv.value().value
                         }
                     }
                 }
@@ -145,23 +144,22 @@ fn expand_enum(item: &syn::ItemEnum, expanded: &mut proc_macro2::TokenStream) ->
                     let mut fields: Vec<proc_macro2::TokenStream> = Vec::new();
                     let mut set_fields: Vec<proc_macro2::TokenStream> = Vec::new();
                     for (field_idx, field) in u.unnamed.iter().enumerate() {
+                        let tmp_ident = syn::Ident::new(&format!("_tmp{}", field_idx), u.span());
                         let field_ident =
                             syn::Ident::new(&format!("_field{}", field_idx), u.span());
                         let ty = &field.ty;
                         fields.push(quote! { #field_ident });
                         set_fields.push(quote! {
-                            <#ty as ocaml_rust::to_value::ToValue>::to_value(
-                                #field_ident,
-                                |x| unsafe { ocaml_sys::store_field(v, #field_idx, x) },
-                            );
+                            let #tmp_ident = <#ty as ocaml_rust::to_value::ToValue>::to_value(#field_ident);
+                            unsafe { ocaml_sys::store_field(rv.value().value, #field_idx,  #tmp_ident)};
                         })
                     }
                     quote! {
                         Self::#variant_ident(#(#fields,)*) => {
                             let v = unsafe { ocaml_sys::caml_alloc(#nfields, #current_index) };
-                            let res = pin(v);
+                            let rv : ocaml_rust::RootedValue<()> = ocaml_rust::RootedValue::create(v);
                             #(#set_fields)*
-                            res
+                            rv.value().value
                         }
                     }
                 }
@@ -171,10 +169,7 @@ fn expand_enum(item: &syn::ItemEnum, expanded: &mut proc_macro2::TokenStream) ->
 
         expanded.extend(quote! {
             impl ocaml_rust::to_value::ToValue for #enum_ident {
-                fn to_value<F, U>(&self, pin: F) -> U
-                where
-                    U: Sized,
-                    F: FnOnce(ocaml_sys::Value) -> U,
+                fn to_value(&self) -> ocaml_sys::Value
                 {
                     match self {
                         #(#variants),*
@@ -226,29 +221,25 @@ fn expand_struct(
         let mut fields: Vec<proc_macro2::TokenStream> = Vec::new();
         let mut set_fields: Vec<proc_macro2::TokenStream> = Vec::new();
         for (field_idx, field) in item.fields.iter().enumerate() {
+            let tmp_ident = syn::Ident::new(&format!("_tmp{}", field_idx), item.span());
             let field_ident = &field.ident;
             let ty = &field.ty;
             fields.push(quote! { #field_ident });
             set_fields.push(quote! {
-                <#ty as ocaml_rust::to_value::ToValue>::to_value(
-                    #field_ident,
-                    |x| unsafe { ocaml_sys::store_field(v, #field_idx, x) },
-                );
-            })
+            let #tmp_ident = <#ty as ocaml_rust::to_value::ToValue>::to_value(#field_ident);
+            unsafe { ocaml_sys::store_field(rv.value().value, #field_idx, #tmp_ident)};
+               })
         }
 
         expanded.extend(quote! {
             impl ocaml_rust::to_value::ToValue for #struct_ident {
-                fn to_value<F, U>(&self, pin: F) -> U
-                where
-                    U: Sized,
-                    F: FnOnce(ocaml_sys::Value) -> U,
+                fn to_value(&self) -> ocaml_sys::Value
                 {
                     let #struct_ident { #(#fields,)* } = self;
                     let v = unsafe { ocaml_sys::caml_alloc_tuple(#nfields) };
-                    let res = pin(v);
+                    let rv : ocaml_rust::RootedValue<()> = ocaml_rust::RootedValue::create(v);
                     #(#set_fields)*
-                    res
+                    rv.value().value
                 }
             }
         });
