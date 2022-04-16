@@ -8,9 +8,8 @@ also the necessary OCaml type and function definitions.
 
 ## Running the Examples
 
-To try out the main example,
+To try out the main examples,
 ```bash
-cd tests/ocaml
 make test
 ```
 

@@ -1,11 +1,7 @@
 (library
- (name test_gen)
- (modules test_gen)
+ (name test_lib)
  (foreign_archives ocaml_rust_example)
+ (libraries base sexplib stdio)
+ (inline_tests)
+ (preprocess (pps ppx_expect ppx_sexp_conv))
  (c_library_flags (-lpthread -lc -lm)))
-
-
-(executable
- (name test)
- (libraries test_gen stdio)
- (modules test))

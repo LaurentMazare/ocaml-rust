@@ -5,7 +5,7 @@ pub mod closure;
 pub mod custom;
 pub mod from_value;
 pub mod gc;
-mod rooted;
+pub mod rooted;
 pub mod to_value;
 pub mod value;
 pub use ocaml_rust_macro::bridge;

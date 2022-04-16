@@ -11,7 +11,7 @@ extern "C" fn finalize_box(v: ocaml_sys::Value) {
 
 const CUSTOM_OPERATIONS_FOR_BOX: ocaml_sys::custom_operations = ocaml_sys::custom_operations {
     identifier: CUSTOM_OPERATIONS_IDENTIFIER.as_ptr() as *const ocaml_sys::Char,
-    finalize: Some(finalize_box),
+    finalize: None, // TODO: reactivate the finalizer after fixing it.
     compare: None,
     hash: None,
     serialize: None,

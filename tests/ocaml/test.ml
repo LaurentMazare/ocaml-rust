@@ -1,48 +1,58 @@
+open! Base
+open! Sexplib.Conv
 module Ffi = Test_gen.Ffi
 module Ffi2 = Test_gen.Ffi2
 module Ffi3 = Test_gen.Ffi3
 module Ffi4 = Test_gen.Ffi4
 
-let r_to_string = function
-  | Ok ok -> string_of_int ok
-  | Error err -> err
+type 'a res = ('a, string) Result.t [@@deriving sexp]
 
-let () =
+let%expect_test _ =
   Stdio.printf "%d\n%!" (Ffi.add_one 41);
   Stdio.printf
     "%d\n%!"
-    (Ffi.add_i64 (Int64.of_int 1234) (Int64.of_int 5678) |> Int64.to_int);
+    (Ffi.add_i64 (Int64.of_int 1234) (Int64.of_int 5678) |> Int64.to_int_exn);
   let res = Ffi.pair ("foobar", 3.14159265358979, (1337, 299792458)) in
   Stdio.printf "<%s>\n%!" res;
+  [%expect {|
+    42
+    6912
+    <foobar:3.14159265358979:1337:299792458> |}]
+
+let%expect_test _ =
   let v = Ffi2.vec_new () in
   for i = 1 to 10 do
     Ffi2.vec_push v i
   done;
-  let array = Ffi2.vec_content v in
-  Stdio.printf "vec<%d>: " (Array.length array);
-  Array.iter (fun i64 -> Stdio.printf "%d " (Int64.to_int i64)) array;
-  Stdio.printf "\n%!";
-  Stdio.printf "opt-result %s\n%!" (Ffi.option_result (Some 1) "foo" |> r_to_string);
-  Stdio.printf "opt-result %s\n%!" (Ffi.option_result None "foo" |> r_to_string);
+  let array = Ffi2.vec_content v |> Array.map ~f:Int64.to_int_exn in
+  Stdio.print_s ([%sexp_of: int array] array);
+  [%expect {| (1 2 3 4 5 6 7 8 9 10) |}];
+  Stdio.print_s (Ffi.option_result (Some 1) "foo" |> [%sexp_of: int res]);
+  Stdio.print_s (Ffi.option_result None "foo" |> [%sexp_of: int res]);
   Stdio.printf "= %s =\n%!" (Ffi.str_format (42, -1337) "bar baz");
-  let v =
-    Ffi.vec_add [| 3; 1; 4; 1; 5; 9; 2; 6; 5 |] (-1)
-    |> Array.to_list
-    |> List.map string_of_int
-    |> String.concat ","
-  in
-  Stdio.printf "<%s>\n%!" v
+  [%expect {|
+    (Ok 1)
+    (Error foo)
+    = foo<42|-1337>: bar baz = |}];
+  let v = Ffi.vec_add [| 3; 1; 4; 1; 5; 9; 2; 6; 5 |] (-1) in
+  Stdio.print_s ([%sexp_of: int array] v);
+  [%expect {| (2 0 3 0 4 8 1 5 4) |}]
 
-let () =
+let%expect_test _ =
   Stdio.printf "\n==== Test Struct ====\n";
   let t =
     { Ffi3.x = 42; y = "foo"; z = 1337, None, 3.14; zs = [| 3.14; 2.71828182846 |] }
   in
   Stdio.printf "<%s>\n%!" (Ffi3.mystruct_to_string t);
   let t = Ffi3.mystruct_add_x t 1337 in
-  Stdio.printf "<%s>\n%!" (Ffi3.mystruct_to_string t)
+  Stdio.printf "<%s>\n%!" (Ffi3.mystruct_to_string t);
+  [%expect
+    {|
+    ==== Test Struct ====
+    <MyStruct { x: 42, y: "foo", z: (1337, None, 3.14), zs: [3.14, 2.71828182846] }>
+    <MyStruct { x: 1379, y: "foo", z: (1337, None, 3.14), zs: [3.14, 2.71828182846] }> |}]
 
-let () =
+let%expect_test _ =
   Stdio.printf "\n==== Test Enum ====\n";
   let myenum m =
     let s1 = Ffi3.myenum_to_string m in
@@ -52,16 +62,26 @@ let () =
   myenum NoArg;
   myenum (OneArg 42);
   myenum (StructArgs { x = 1337; y = "FooBar" });
-  myenum (TwoArgs (1337, "FooBar"))
+  myenum (TwoArgs (1337, "FooBar"));
+  [%expect
+    {|
+    ==== Test Enum ====
+    <NoArg> <NoArg>
+    <OneArg(42)> <OneArg(84)>
+    <StructArgs { x: 1337, y: "FooBar" }> <StructArgs { x: 1379, y: "FooBar" }>
+    <TwoArgs(1337, "FooBar")> <TwoArgs(1379, "FooBar")> |}]
 
-let () =
+let%expect_test _ =
   Stdio.printf "\n==== Test Closures ====\n";
   Ffi4.map_callback [| 3; 1; 4; 1; 5; 9; 2 |] (Printf.sprintf "<%d>")
-  |> Array.to_list
-  |> String.concat ","
-  |> Stdio.printf "%s\n%!";
+  |> [%sexp_of: string array]
+  |> Stdio.print_s;
+  [%expect {|
+    ==== Test Closures ====
+    (<3> <1> <4> <1> <5> <9> <2>) |}];
   let r = ref 0 in
   Ffi4.sum_n 20 (fun () ->
-      incr r;
+      Int.incr r;
       !r)
-  |> Stdio.printf "%d\n%!"
+  |> Stdio.printf "%d\n%!";
+  [%expect {| 210 |}]
