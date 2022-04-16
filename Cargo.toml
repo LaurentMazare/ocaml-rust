@@ -8,7 +8,7 @@ repository = "https://github.com/LaurentMazare/ocaml-rust"
 exclude = ["/example", "/gen"]
 
 [dependencies]
-ocaml-sys = "0.22.0"
+ocaml-sys = "0.22.2"
 ocaml-boxroot-sys = "0.2.0"
 ocaml-rust-macro = { version = "0.0.1", path = "macro" }
 thiserror = "1"
