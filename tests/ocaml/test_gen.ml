@@ -93,4 +93,9 @@ module Ffi4 = struct
     = "__ocaml_ffi4_map_callback"
   ;;
 
+  external sum_n
+    : isize -> (unit -> (isize)) -> isize
+    = "__ocaml_ffi4_sum_n"
+  ;;
+
 end

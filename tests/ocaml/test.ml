@@ -31,13 +31,19 @@ let () =
     |> List.map string_of_int
     |> String.concat ","
   in
-  Stdio.printf "<%s>\n%!" v;
+  Stdio.printf "<%s>\n%!" v
+
+let () =
+  Stdio.printf "\n==== Test Struct ====\n";
   let t =
     { Ffi3.x = 42; y = "foo"; z = 1337, None, 3.14; zs = [| 3.14; 2.71828182846 |] }
   in
   Stdio.printf "<%s>\n%!" (Ffi3.mystruct_to_string t);
   let t = Ffi3.mystruct_add_x t 1337 in
-  Stdio.printf "<%s>\n%!" (Ffi3.mystruct_to_string t);
+  Stdio.printf "<%s>\n%!" (Ffi3.mystruct_to_string t)
+
+let () =
+  Stdio.printf "\n==== Test Enum ====\n";
   let myenum m =
     let s1 = Ffi3.myenum_to_string m in
     let s2 = Ffi3.myenum_add_x m 42 |> Ffi3.myenum_to_string in
@@ -46,8 +52,16 @@ let () =
   myenum NoArg;
   myenum (OneArg 42);
   myenum (StructArgs { x = 1337; y = "FooBar" });
-  myenum (TwoArgs (1337, "FooBar"));
+  myenum (TwoArgs (1337, "FooBar"))
+
+let () =
+  Stdio.printf "\n==== Test Closures ====\n";
   Ffi4.map_callback [| 3; 1; 4; 1; 5; 9; 2 |] (Printf.sprintf "<%d>")
   |> Array.to_list
   |> String.concat ","
-  |> Stdio.printf "%s\n%!"
+  |> Stdio.printf "%s\n%!";
+  let r = ref 0 in
+  Ffi4.sum_n 20 (fun () ->
+      incr r;
+      !r)
+  |> Stdio.printf "%d\n%!"

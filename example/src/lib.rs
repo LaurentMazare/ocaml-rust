@@ -1,4 +1,4 @@
-use ocaml_rust::closure::Fn1;
+use ocaml_rust::closure::{Fn0, Fn1};
 
 fn option_result(v: Option<isize>, e: String) -> Result<isize, String> {
     match v {
@@ -116,9 +116,15 @@ fn myenum_add_x(m: &MyEnum, v: isize) -> MyEnum {
 mod ffi4 {
     extern "Rust" {
         fn map_callback(vs: &Vec<isize>, f: &mut Fn1<isize, String>) -> Vec<String>;
+
+        fn sum_n(n: isize, f: &mut Fn0<isize>) -> isize;
     }
 }
 
 fn map_callback(vs: &Vec<isize>, f: &mut Fn1<isize, String>) -> Vec<String> {
     vs.iter().map(|x| f.call1(*x)).collect()
+}
+
+fn sum_n(n: isize, f: &mut Fn0<isize>) -> isize {
+    (0..n).map(|_x| f.call0()).sum()
 }

@@ -1,6 +1,41 @@
 use crate::from_value::FromSysValue;
 use crate::to_value::ToValue;
 
+pub struct Fn0<Res>
+where
+    Res: 'static + FromSysValue,
+{
+    // This is not the right type in the RootedValue parameter
+    // but this does not matter here.
+    f: crate::RootedValue<Res>,
+    phantom_data: std::marker::PhantomData<Res>,
+}
+
+impl<Res> FromSysValue for Fn0<Res>
+where
+    Res: 'static + FromSysValue,
+{
+    unsafe fn from_value(f: ocaml_sys::Value) -> Self {
+        let f = crate::RootedValue::create(f);
+        Fn0 { f, phantom_data: std::marker::PhantomData }
+    }
+}
+
+impl<Res> Fn0<Res>
+where
+    Res: 'static + FromSysValue,
+{
+    // This uses [mut self] as this can result in side effects on the ocaml side.
+    pub fn call0(&mut self) -> Res {
+        let f = self.f.value().value;
+        let res = unsafe { ocaml_sys::caml_callback_exn(f, ocaml_sys::UNIT) };
+        if ocaml_sys::is_exception_result(res) {
+            panic!("TODO: got an ocaml exception")
+        }
+        unsafe { Res::from_value(res) }
+    }
+}
+
 pub struct Fn1<Arg, Res>
 where
     Arg: ToValue,

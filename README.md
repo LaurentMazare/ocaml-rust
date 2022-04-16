@@ -125,13 +125,36 @@ module Ffi2 = struct
   external vec_content : my_vec -> i64 array = "__ocaml_ffi2_vec_content"
 ```
 
+## Passing OCaml Closures to Rust Code
+
+It is also possible to pass OCaml closure as argument to Rust functions.
+The following example illustrates how to do this:
+```rust
+#[ocaml_rust::bridge]
+mod ffi4 {
+    extern "Rust" {
+        fn map_callback(vs: &Vec<isize>, f: &mut Fn1<isize, String>) -> Vec<String>;
+    }
+}
+
+fn map_callback(vs: &Vec<isize>, f: &mut Fn1<isize, String>) -> Vec<String> {
+    vs.iter().map(|x| f.call1(*x)).collect()
+}
+```
+
+Then the `map_callback` function can be used in OCaml by passing it an OCaml closure
+as argument.
+
+```ocaml
+Ffi4.map_callback [| 3; 1; 4; 1; 5; 9; 2 |] (Printf.sprintf "<%d>")
+```
+
 ## Missing Bits
 
 This is only a proof of concept at the moment, the code is unlikely to work well
 on real-world examples, the following bits would have to be improved:
 
 - Generalize the use of `ocaml_boxroot` to avoid GC issues when building OCaml values. 
-- Pass OCaml closures so that the can be called from the Rust side.
 - Properly handle float arrays and record/struct using floats only.
 - Improve the wrapping of the custom blocks used for abstract types.
 - Proper packaging.
