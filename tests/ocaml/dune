@@ -1,0 +1,11 @@
+(library
+ (name test_gen)
+ (modules test_gen)
+ (foreign_archives ocaml_rust_example)
+ (c_library_flags (-lpthread -lc -lm)))
+
+
+(executable
+ (name test)
+ (libraries test_gen stdio)
+ (modules test))

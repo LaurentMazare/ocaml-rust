@@ -1,0 +1,18 @@
+[package]
+name = "ocaml-rust-cmd"
+version = "0.0.1"
+edition = "2021"
+authors = ["Laurent Mazare <lmazare@gmail.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/LaurentMazare/ocaml-rust"
+
+[[bin]]
+name = "ocaml-rust"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "3.1.8", features = ["derive"] }
+proc-macro2 = "1.0"
+quote = "1.0.4"
+syn = { version = "1.0.70", features = ["full", "printing"] }
+thiserror = "1"

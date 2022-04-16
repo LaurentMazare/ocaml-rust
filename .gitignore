@@ -1,0 +1,12 @@
+target/
+_build/
+data/
+gen/.merlin
+**/*.rs.bk
+*.swp
+*.swo
+__pycache__
+*~
+.*~
+tests/ocaml/lib*.a
+tests/ocaml/lib*.so
