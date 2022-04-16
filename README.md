@@ -124,6 +124,18 @@ module Ffi2 = struct
   external vec_push : my_vec -> isize -> unit = "__ocaml_ffi2_vec_push"
   external vec_content : my_vec -> i64 array = "__ocaml_ffi2_vec_content"
 ```
+
+## Missing Bits
+
+This is only a proof of concept at the moment, the code is unlikely to work well
+on real-world examples, the following bits would have to be improved:
+
+- Generalize the use of `ocaml_boxroot` to avoid GC issues when building OCaml values. 
+- Pass OCaml closures so that the can be called from the Rust side.
+- Properly handle float arrays and record/struct using floats only.
+- Improve the wrapping of the custom blocks used for abstract types.
+- Proper packaging.
+- Make it possible to call the OCaml code from Rust, add the `extern "OCaml"` construct.
  
 ## Other OCaml-Rust FFI
 
