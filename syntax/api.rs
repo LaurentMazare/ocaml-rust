@@ -29,6 +29,7 @@ pub enum Type {
     VecList(Box<Type>),
     Option(Box<Type>),
     Result(Box<Type>, Box<Type>),
+    Fn1(Box<Type>, Box<Type>),
 }
 
 impl Type {
@@ -74,6 +75,9 @@ impl Type {
                                     if ident == "Result" {
                                         return Ok(Type::Result(ty0, ty1));
                                     }
+                                    if ident == "Fn1" {
+                                        return Ok(Type::Fn1(ty0, ty1));
+                                    }
                                 }
                             }
                         }
@@ -112,6 +116,9 @@ impl Type {
             }
             Self::Result(ty_ok, ty_err) => {
                 format!("({}, {}) Result.t", ty_ok.to_ocaml_string(), ty_err.to_ocaml_string())
+            }
+            Self::Fn1(ty_arg, ty_res) => {
+                format!("(({}) -> ({}))", ty_arg.to_ocaml_string(), ty_res.to_ocaml_string())
             }
         }
     }

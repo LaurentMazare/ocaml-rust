@@ -1,3 +1,5 @@
+use ocaml_rust::closure::Fn1;
+
 fn option_result(v: Option<isize>, e: String) -> Result<isize, String> {
     match v {
         Some(v) => Ok(v),
@@ -108,4 +110,15 @@ fn myenum_add_x(m: &MyEnum, v: isize) -> MyEnum {
         MyEnum::TwoArgs(x, s) => MyEnum::TwoArgs(x + v, s.to_string()),
         MyEnum::StructArgs { x, y } => MyEnum::StructArgs { x: x + v, y: y.to_string() },
     }
+}
+
+#[ocaml_rust::bridge]
+mod ffi4 {
+    extern "Rust" {
+        fn map_callback(vs: &Vec<isize>, f: &mut Fn1<isize, String>) -> Vec<String>;
+    }
+}
+
+fn map_callback(vs: &Vec<isize>, f: &mut Fn1<isize, String>) -> Vec<String> {
+    vs.iter().map(|x| f.call1(*x)).collect()
 }

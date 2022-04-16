@@ -87,3 +87,10 @@ module Ffi3 = struct
   ;;
 
 end
+module Ffi4 = struct
+  external map_callback
+    : isize array -> ((isize) -> (string)) -> string array
+    = "__ocaml_ffi4_map_callback"
+  ;;
+
+end

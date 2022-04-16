@@ -1,6 +1,7 @@
 module Ffi = Test_gen.Ffi
 module Ffi2 = Test_gen.Ffi2
 module Ffi3 = Test_gen.Ffi3
+module Ffi4 = Test_gen.Ffi4
 
 let r_to_string = function
   | Ok ok -> string_of_int ok
@@ -45,4 +46,8 @@ let () =
   myenum NoArg;
   myenum (OneArg 42);
   myenum (StructArgs { x = 1337; y = "FooBar" });
-  myenum (TwoArgs (1337, "FooBar"))
+  myenum (TwoArgs (1337, "FooBar"));
+  Ffi4.map_callback [| 3; 1; 4; 1; 5; 9; 2 |] (Printf.sprintf "<%d>")
+  |> Array.to_list
+  |> String.concat ","
+  |> Stdio.printf "%s\n%!"
