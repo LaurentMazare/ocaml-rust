@@ -1,5 +1,4 @@
 // TODO: pretty much everything.
-//   - Closures.
 //   - Call from Rust, start the OCaml runtime in that case?
 pub mod closure;
 pub mod custom;

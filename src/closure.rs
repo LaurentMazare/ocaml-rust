@@ -80,3 +80,95 @@ where
         }
     }
 }
+
+pub struct Fn2<Arg1, Arg2, Res>
+where
+    Arg1: ToValue,
+    Arg2: ToValue,
+    Res: 'static + FromSysValue,
+{
+    f: crate::RootedValue<Res>,
+    phantom_data: std::marker::PhantomData<(Arg1, Arg2, Res)>,
+}
+
+impl<Arg1, Arg2, Res> FromSysValue for Fn2<Arg1, Arg2, Res>
+where
+    Arg1: ToValue,
+    Arg2: ToValue,
+    Res: 'static + FromSysValue,
+{
+    unsafe fn from_value(f: ocaml_sys::Value) -> Self {
+        let f = crate::RootedValue::create(f);
+        Fn2 { f, phantom_data: std::marker::PhantomData }
+    }
+}
+
+impl<Arg1, Arg2, Res> Fn2<Arg1, Arg2, Res>
+where
+    Arg1: ToValue,
+    Arg2: ToValue,
+    Res: 'static + FromSysValue,
+{
+    // This uses [mut self] as this can result in side effects on the ocaml side.
+    pub fn call2<'a>(&mut self, arg1: Arg1, arg2: Arg2) -> crate::exn::Result<'a, Res> {
+        let f = self.f.value().value;
+        let arg1 = arg1.to_value(|x| x);
+        let arg2 = arg2.to_value(|x| x);
+        let res = unsafe { ocaml_sys::caml_callback2_exn(f, arg1, arg2) };
+        if ocaml_sys::is_exception_result(res) {
+            let exn = ocaml_sys::extract_exception(res);
+            let exn: crate::exn::OCamlError<'a> = unsafe { crate::value::Value::new(exn) };
+            Err(exn)
+        } else {
+            Ok(unsafe { Res::from_value(res) })
+        }
+    }
+}
+
+pub struct Fn3<Arg1, Arg2, Arg3, Res>
+where
+    Arg1: ToValue,
+    Arg2: ToValue,
+    Arg3: ToValue,
+    Res: 'static + FromSysValue,
+{
+    f: crate::RootedValue<Res>,
+    phantom_data: std::marker::PhantomData<(Arg1, Arg2, Arg3, Res)>,
+}
+
+impl<Arg1, Arg2, Arg3, Res> FromSysValue for Fn3<Arg1, Arg2, Arg3, Res>
+where
+    Arg1: ToValue,
+    Arg2: ToValue,
+    Arg3: ToValue,
+    Res: 'static + FromSysValue,
+{
+    unsafe fn from_value(f: ocaml_sys::Value) -> Self {
+        let f = crate::RootedValue::create(f);
+        Fn3 { f, phantom_data: std::marker::PhantomData }
+    }
+}
+
+impl<Arg1, Arg2, Arg3, Res> Fn3<Arg1, Arg2, Arg3, Res>
+where
+    Arg1: ToValue,
+    Arg2: ToValue,
+    Arg3: ToValue,
+    Res: 'static + FromSysValue,
+{
+    // This uses [mut self] as this can result in side effects on the ocaml side.
+    pub fn call3<'a>(&mut self, arg1: Arg1, arg2: Arg2, arg3: Arg3) -> crate::exn::Result<'a, Res> {
+        let f = self.f.value().value;
+        let arg1 = arg1.to_value(|x| x);
+        let arg2 = arg2.to_value(|x| x);
+        let arg3 = arg3.to_value(|x| x);
+        let res = unsafe { ocaml_sys::caml_callback3_exn(f, arg1, arg2, arg3) };
+        if ocaml_sys::is_exception_result(res) {
+            let exn = ocaml_sys::extract_exception(res);
+            let exn: crate::exn::OCamlError<'a> = unsafe { crate::value::Value::new(exn) };
+            Err(exn)
+        } else {
+            Ok(unsafe { Res::from_value(res) })
+        }
+    }
+}
