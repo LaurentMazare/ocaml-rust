@@ -8,7 +8,12 @@ also the necessary OCaml type and function definitions.
 
 ## Running the Examples
 
-To try out the main examples,
+The following runs a small example and can be useful to debug issues.
+```bash
+dune exec --root=tests/ocaml ./test_cmd.exe
+```
+
+Running the tests can be done via:
 ```bash
 make test
 ```

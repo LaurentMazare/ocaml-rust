@@ -1,7 +1,14 @@
 (library
  (name test_lib)
+ (modules test test_gen)
  (foreign_archives ocaml_rust_example)
  (libraries base sexplib stdio)
  (inline_tests)
  (preprocess (pps ppx_expect ppx_sexp_conv))
  (c_library_flags (-lpthread -lc -lm)))
+
+(executable
+ (name test_cmd)
+ (modules test_cmd)
+ (libraries base sexplib stdio test_lib)
+ (preprocess (pps ppx_expect ppx_sexp_conv)))

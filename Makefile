@@ -7,3 +7,6 @@ test:
 
 promote:
 	dune promote --root=tests/ocaml
+
+test-exe:
+	dune exec --root=tests/ocaml ./test_cmd.exe
