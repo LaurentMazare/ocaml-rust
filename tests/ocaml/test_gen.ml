@@ -99,3 +99,16 @@ module Ffi4 = struct
   ;;
 
 end
+module Ffi5 = struct
+  type foo_a;;
+  external create_foo
+    : isize -> foo_a
+    = "__ocaml_ffi5_create_foo"
+  ;;
+
+  external foo_to_string
+    : foo_a -> string
+    = "__ocaml_ffi5_foo_to_string"
+  ;;
+
+end

@@ -1,13 +1,15 @@
+// Use two Box indirections here, the first Box is leaked to result in a ptr.
+// The second box is used to get a fat pointer so that the proper destructor
+// can be called in the finalizer.
+// This is very close to the ocaml-interop implementation.
+// https://github.com/tezedge/ocaml-interop/blob/265773e1d73585aad73ee579ae80c0e6b5fb4c57/src/memory.rs#L197
 use std::cell::UnsafeCell;
 
 const CUSTOM_OPERATIONS_IDENTIFIER: &str = "_custom_rust_box\0";
 
 extern "C" fn finalize_box(v: ocaml_sys::Value) {
-    unsafe {
-        let b = ocaml_sys::field(v, 1);
-        // TODO: properly drop the box here.
-        // drop(Box::from_raw(b))
-    }
+    let v = unsafe { *ocaml_sys::field(v, 1) as *mut Box<dyn std::any::Any> };
+    drop(unsafe { Box::from_raw(v) })
 }
 
 const CUSTOM_OPERATIONS_FOR_BOX: ocaml_sys::custom_operations = ocaml_sys::custom_operations {
@@ -22,20 +24,22 @@ const CUSTOM_OPERATIONS_FOR_BOX: ocaml_sys::custom_operations = ocaml_sys::custo
 };
 
 pub fn new<'a, T: 'static>(_gc: &'a mut crate::gc::Gc, t: T) -> crate::Value<'a, Box<T>> {
-    let boxed_t = Box::into_raw(Box::new(UnsafeCell::new(t)));
+    let box_: Box<Box<dyn std::any::Any>> = Box::new(Box::new(UnsafeCell::new(t)));
+    let boxed_t = Box::into_raw(box_);
     let sys_value = unsafe {
         ocaml_sys::caml_alloc_custom(
             &CUSTOM_OPERATIONS_FOR_BOX,
-            std::mem::size_of::<Box<T>>(),
+            std::mem::size_of::<Box<Box<dyn std::any::Any>>>(),
             0,
             1,
         )
     };
-    unsafe { ocaml_sys::store_field(sys_value, 1, boxed_t as isize) };
+    let ptr = unsafe { ocaml_sys::field(sys_value, 1) } as *mut _;
+    unsafe { std::ptr::write(ptr, boxed_t) };
     unsafe { crate::Value::new(sys_value) }
 }
 
 pub fn get<'a, T: 'static>(v: crate::Value<'a, Box<T>>) -> &'a UnsafeCell<T> {
-    let v = unsafe { ocaml_sys::field(v.value, 1) };
-    unsafe { &*(v as *const Box<UnsafeCell<T>>) }
+    let v = unsafe { *ocaml_sys::field(v.value, 1) as *mut Box<dyn std::any::Any> };
+    unsafe { &**v }.downcast_ref::<UnsafeCell<T>>().expect("unexpected box content")
 }

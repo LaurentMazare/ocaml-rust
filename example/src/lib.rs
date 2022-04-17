@@ -128,3 +128,32 @@ fn map_callback(vs: &Vec<isize>, f: &mut Fn1<isize, String>) -> Vec<String> {
 fn sum_n(n: isize, f: &mut Fn0<isize>) -> isize {
     (0..n).map(|_x| f.call0()).sum()
 }
+
+#[derive(Debug, Clone)]
+struct Foo {
+    v: isize,
+}
+
+impl Drop for Foo {
+    fn drop(&mut self) {
+        println!("dropping foo {}", self.v)
+    }
+}
+
+#[ocaml_rust::bridge]
+mod ffi5 {
+    type FooA = Foo;
+
+    extern "Rust" {
+        fn create_foo(v: isize) -> FooA;
+        fn foo_to_string(v: &FooA) -> String;
+    }
+}
+
+fn create_foo(v: isize) -> Foo {
+    Foo { v }
+}
+
+fn foo_to_string(v: &Foo) -> String {
+    format!("v{v:?}")
+}
