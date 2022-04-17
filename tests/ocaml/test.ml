@@ -85,7 +85,14 @@ let%expect_test _ =
       Int.incr r;
       !r)
   |> Stdio.printf "%d\n%!";
-  [%expect {| 210 |}]
+  [%expect {| 210 |}];
+  try
+    let (_ : int) = Ffi4.sum_n 1 (fun () -> failwith "ocaml-failwith") in
+    ()
+  with
+  | exn ->
+    Stdio.printf "failed as expected, %s\n%!" (Exn.to_string exn);
+    [%expect {| failed as expected, (Failure "@\134C\132hU") |}]
 
 let%expect_test _ =
   Stdio.printf "\n==== Test Custom Drop ====\n";

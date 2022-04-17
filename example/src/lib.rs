@@ -122,11 +122,11 @@ mod ffi4 {
 }
 
 fn map_callback(vs: &Vec<isize>, f: &mut Fn1<isize, String>) -> Vec<String> {
-    vs.iter().map(|x| f.call1(*x)).collect()
+    vs.iter().map(|x| f.call1(*x).unwrap()).collect()
 }
 
 fn sum_n(n: isize, f: &mut Fn0<isize>) -> isize {
-    (0..n).map(|_x| f.call0()).sum()
+    (0..n).map(|_x| f.call0().unwrap()).sum()
 }
 
 #[derive(Debug, Clone)]

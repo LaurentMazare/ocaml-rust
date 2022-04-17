@@ -3,11 +3,13 @@
 //   - Call from Rust, start the OCaml runtime in that case?
 pub mod closure;
 pub mod custom;
+pub mod exn;
 pub mod from_value;
 pub mod gc;
 pub mod rooted;
 pub mod to_value;
 pub mod value;
+pub use exn::OCamlExn;
 pub use ocaml_rust_macro::bridge;
 pub use rooted::RootedValue;
 pub use to_value::to_rooted_value;

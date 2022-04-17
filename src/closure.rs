@@ -26,13 +26,16 @@ where
     Res: 'static + FromSysValue,
 {
     // This uses [mut self] as this can result in side effects on the ocaml side.
-    pub fn call0(&mut self) -> Res {
+    pub fn call0<'a>(&mut self) -> crate::exn::Result<'a, Res> {
         let f = self.f.value().value;
         let res = unsafe { ocaml_sys::caml_callback_exn(f, ocaml_sys::UNIT) };
         if ocaml_sys::is_exception_result(res) {
-            panic!("TODO: got an ocaml exception")
+            let exn = ocaml_sys::extract_exception(res);
+            let exn: crate::exn::OCamlError<'a> = unsafe { crate::value::Value::new(exn) };
+            Err(exn)
+        } else {
+            Ok(unsafe { Res::from_value(res) })
         }
-        unsafe { Res::from_value(res) }
     }
 }
 
@@ -64,13 +67,16 @@ where
     Res: 'static + FromSysValue,
 {
     // This uses [mut self] as this can result in side effects on the ocaml side.
-    pub fn call1(&mut self, arg: Arg) -> Res {
+    pub fn call1<'a>(&mut self, arg: Arg) -> crate::exn::Result<'a, Res> {
         let f = self.f.value().value;
         let arg = arg.to_value(|x| x);
         let res = unsafe { ocaml_sys::caml_callback_exn(f, arg) };
         if ocaml_sys::is_exception_result(res) {
-            panic!("TODO: got an ocaml exception")
+            let exn = ocaml_sys::extract_exception(res);
+            let exn: crate::exn::OCamlError<'a> = unsafe { crate::value::Value::new(exn) };
+            Err(exn)
+        } else {
+            Ok(unsafe { Res::from_value(res) })
         }
-        unsafe { Res::from_value(res) }
     }
 }
