@@ -108,3 +108,10 @@ module Ffi6 = struct
   ;;
 
 end
+module Ffi6 = struct
+  external generate
+    : isize -> ((((isize * isize) * compact) * isize) * isize)
+    = "__ocaml_ffi6_generate"
+  ;;
+
+end

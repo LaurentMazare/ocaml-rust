@@ -166,3 +166,38 @@ fn foo2_to_string(v: &Custom<Foo>) -> String {
     let v = v.inner().lock().unwrap();
     format!("v: {:?}", v)
 }
+
+struct Compact();
+
+impl ocaml_rust::to_value::ToValue for Compact {
+    fn to_value<F, U>(&self, pin: F) -> U
+    where
+        U: Sized,
+        F: FnOnce(ocaml_sys::Value) -> U,
+    {
+        unsafe {
+            ocaml_sys::caml_gc_compaction(ocaml_sys::UNIT);
+            pin(ocaml_sys::UNIT)
+        }
+    }
+}
+
+#[ocaml_rust::bridge]
+mod ffi6 {
+    extern "Rust" {
+        fn generate(i: isize) -> ((((isize, isize), Compact), isize), isize);
+    }
+}
+
+fn generate(i0: isize) -> ((((isize, isize), Compact), isize), isize) {
+    let mut i = i0;
+    let d = i % 1000;
+    i /= 1000;
+    let c = i % 1000;
+    i /= 1000;
+    let b = i % 1000;
+    i /= 1000;
+    let a = i;
+    println!("Rust: {} {} {} {} {}", i0, a, b, c, d);
+    ((((a, b), Compact()), c), d)
+}

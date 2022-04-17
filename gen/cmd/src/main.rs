@@ -3,7 +3,7 @@ use crate::syntax::api::{ApiItem, Lang, ModItem};
 use crate::syntax::file::File;
 use clap::Parser;
 use std::io::{Read, Write};
-use syn::Attribute;
+use syn::Attribute; // TODO : Add compact to what was the Header before
 
 fn read_to_string<P>(path: &P) -> Result<String, std::io::Error>
 where

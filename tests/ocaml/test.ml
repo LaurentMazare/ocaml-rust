@@ -113,3 +113,13 @@ let%expect_test _ =
   [%expect {|
     v: Foo { v: 42 }
     dropping foo 42 |}]
+
+let%expect_test _ =
+  Stdio.printf "\n==== Test GC Safety ====\n";
+  let (((a, b), _c), d), e = Ffi6.generate 1664 in
+  Stdio.printf "%i %i %i %i\n" a b d e;
+  [%expect {|
+    Rust: 1664 0 0 1 664
+
+    ==== Test GC Safety ====
+    0 0 0 0 |}]
