@@ -20,13 +20,11 @@ static PANIC_HOOK_SETUP: std::sync::Once = std::sync::Once::new();
 pub fn initial_setup() {
     PANIC_HOOK_SETUP.call_once(|| unsafe {
         std::panic::set_hook(Box::new(|panic_info| {
-            let payload = std::ffi::CString::new(panic_info.to_string());
-            let ptr = if let Ok(payload) = payload {
-                payload.as_ptr()
-            } else {
-                "unhandled rust panic\0".as_ptr() as *const i8
-            };
-            ocaml_sys::caml_failwith(libc::strdup(ptr));
+            let panic_info = panic_info.to_string();
+            let v = ocaml_sys::caml_alloc_string(panic_info.len());
+            let ptr = ocaml_sys::string_val(v);
+            core::ptr::copy_nonoverlapping(panic_info.as_ptr(), ptr, panic_info.len());
+            ocaml_sys::caml_failwith_value(v);
         }))
     });
 }
