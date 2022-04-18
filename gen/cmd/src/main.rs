@@ -2,6 +2,7 @@ mod syntax;
 use crate::syntax::api::{ApiItem, Lang, ModItem};
 use crate::syntax::file::File;
 use clap::Parser;
+use quote::ToTokens;
 use std::io::{Read, Write};
 
 const HEADER: &str = r#"
@@ -119,7 +120,36 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                         let ty = syntax::api::Type::parse_type(&field.ty)?.to_ocaml_string();
                         writeln!(w, "    {ident}: {ty};")?;
                     }
-                    writeln!(w, "  }} [@@boxed];;")?;
+                    let deriving = s
+                        .clone()
+                        .attrs
+                        .into_iter()
+                        .flat_map(|attr| {
+                            if syntax::api::attr_is_ocaml_deriving(&attr) {
+                                match &attr.tokens.clone().into_iter().collect::<Vec<_>>()[..] {
+                                    [proc_macro2::TokenTree::Group(group)] => group
+                                        .stream()
+                                        .into_iter()
+                                        .filter_map(|elem| match elem {
+                                            proc_macro2::TokenTree::Ident(ident) => {
+                                                Some(ident.to_string())
+                                            }
+                                            _ => None,
+                                        })
+                                        .collect(),
+                                    _ => vec![],
+                                }
+                            } else {
+                                vec![]
+                            }
+                        })
+                        .collect::<Vec<_>>();
+                    let deriving = if deriving.is_empty() {
+                        "".to_string()
+                    } else {
+                        format!("[@@deriving {}]", deriving.join(","))
+                    };
+                    writeln!(w, "  }} [@@boxed]{};;", deriving)?;
                 }
                 ApiItem::Type(i) => {
                     writeln!(w, "  type {};;", syntax::api::ocamlize(&i.ident.to_string()))?;

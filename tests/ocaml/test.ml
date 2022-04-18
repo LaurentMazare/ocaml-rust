@@ -94,7 +94,7 @@ let%expect_test _ =
     Stdio.printf "failed as expected, %s\n%!" (Exn.to_string exn);
     [%expect {|
       failed as expected, (Failure
-        "panicked at 'called `Result::unwrap()` on an `Err` value: ocaml exn: Failure(\"ocaml-failwith\")', example/src/lib.rs:129:31") |}]
+        "panicked at 'called `Result::unwrap()` on an `Err` value: ocaml exn: Failure(\"ocaml-failwith\")', example/src/lib.rs:130:31") |}]
 
 let%expect_test _ =
   Stdio.printf "\n==== Test Custom Drop ====\n";

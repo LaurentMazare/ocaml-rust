@@ -431,11 +431,17 @@ fn expand_enum(item: &syn::ItemEnum, expanded: &mut proc_macro2::TokenStream) ->
     Ok(())
 }
 
+pub fn attr_is_ocaml_deriving(attr: &Attribute) -> bool {
+    !attr.path.segments.is_empty() && attr.path.segments[0].ident == "ocaml_deriving"
+}
+
 fn expand_struct(
     item: &syn::ItemStruct,
     expanded: &mut proc_macro2::TokenStream,
 ) -> syn::Result<()> {
-    expanded.extend(item.into_token_stream());
+    let mut item = item.clone();
+    item.attrs = item.attrs.into_iter().filter(|x| !attr_is_ocaml_deriving(x)).collect();
+    expanded.extend((&item).into_token_stream());
     let struct_ident = &item.ident;
     let nfields = item.fields.len();
     {

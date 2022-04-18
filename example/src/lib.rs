@@ -73,6 +73,7 @@ mod ffi3 {
         // Rec(Box<MyEnum>),
     }
 
+    // #[ocaml_deriving(sexp)]
     #[derive(Debug, Clone)]
     struct MyStruct {
         x: isize,
