@@ -44,16 +44,10 @@ jobs:
 
       - run: opam install base sexplib stdio ppx_sexp_conv ppx_expect
 
-      - name: set opam env variables
-        run: opam env >> $GITHUB_ENV
-
-      - name: add opam to path
-        run: opam var bin >> $GITHUB_PATH
- 
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
 
-      - run: make test
+      - run: opam exec -- make test
