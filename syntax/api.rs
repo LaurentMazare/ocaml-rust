@@ -165,6 +165,7 @@ pub enum ApiItem {
     Enum(syn::ItemEnum),
     Struct(syn::ItemStruct),
     Type(syn::ItemType),
+    Include(String),
     Other(syn::Item),
 }
 
@@ -193,6 +194,10 @@ impl Parse for ApiItem {
 
         let item = input.parse()?;
         match item {
+            syn::Item::Macro(f) if f.mac.path.is_ident("ocaml_include") => {
+                let f: syn::LitStr = f.mac.parse_body()?;
+                Ok(ApiItem::Include(f.value()))
+            }
             syn::Item::Struct(mut item) => {
                 item.attrs.splice(..0, attrs);
                 Ok(ApiItem::Struct(item.clone()))
@@ -259,7 +264,9 @@ impl Parse for ApiItem {
 }
 
 fn expand_enum(item: &syn::ItemEnum, expanded: &mut proc_macro2::TokenStream) -> syn::Result<()> {
-    expanded.extend(item.into_token_stream());
+    let mut item = item.clone();
+    item.attrs = item.attrs.into_iter().filter(|x| !attr_is_ocaml_deriving(x)).collect();
+    expanded.extend((&item).into_token_stream());
     let enum_ident = &item.ident;
 
     // FromValue
@@ -600,6 +607,7 @@ impl Api {
                 ApiItem::Enum(item) => expand_enum(item, &mut expanded)?,
                 ApiItem::Struct(item) => expand_struct(item, &mut expanded)?,
                 ApiItem::Type(item) => expand_type(item, &mut expanded)?,
+                ApiItem::Include(_) => {}
                 ApiItem::Other(other) => {
                     return Err(Error::new(other.span(), "unsupported"));
                 }
@@ -615,6 +623,7 @@ impl Api {
             .filter_map(|api_item| match api_item {
                 ApiItem::Type(item) => Some(item.ident.clone()),
                 ApiItem::ForeignMod { .. }
+                | ApiItem::Include(_)
                 | ApiItem::Enum(_)
                 | ApiItem::Struct(_)
                 | ApiItem::Other(_) => None,

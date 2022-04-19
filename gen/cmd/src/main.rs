@@ -3,6 +3,7 @@ use crate::syntax::api::{ApiItem, Lang, ModItem};
 use crate::syntax::file::File;
 use clap::Parser;
 use std::io::{Read, Write};
+use syn::Attribute;
 
 fn read_to_string<P>(path: &P) -> Result<String, std::io::Error>
 where
@@ -40,6 +41,35 @@ fn capitalize(s: &str) -> String {
     match s.next() {
         None => "".to_string(),
         Some(c) => format!("{}{}", c.to_uppercase(), s.collect::<String>()),
+    }
+}
+
+fn ocaml_deriving(attrs: &[Attribute]) -> String {
+    let deriving = attrs
+        .clone()
+        .into_iter()
+        .flat_map(|attr| {
+            if syntax::api::attr_is_ocaml_deriving(&attr) {
+                match &attr.tokens.clone().into_iter().collect::<Vec<_>>()[..] {
+                    [proc_macro2::TokenTree::Group(group)] => group
+                        .stream()
+                        .into_iter()
+                        .filter_map(|elem| match elem {
+                            proc_macro2::TokenTree::Ident(ident) => Some(ident.to_string()),
+                            _ => None,
+                        })
+                        .collect(),
+                    _ => vec![],
+                }
+            } else {
+                vec![]
+            }
+        })
+        .collect::<Vec<_>>();
+    if deriving.is_empty() {
+        "".to_string()
+    } else {
+        format!("[@@deriving {}]", deriving.join(","))
     }
 }
 
@@ -96,7 +126,8 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                         };
                         writeln!(w, "  | {variant_ident}{args}")?;
                     }
-                    writeln!(w, "  [@@boxed];;")?;
+                    let deriving = ocaml_deriving(&e.attrs);
+                    writeln!(w, "  [@@boxed]{};;", deriving)?;
                 }
                 ApiItem::Struct(s) => {
                     writeln!(w, "  type {} = {{", syntax::api::ocamlize(&s.ident.to_string()))?;
@@ -111,39 +142,14 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                         let ty = syntax::api::Type::parse_type(&field.ty)?.to_ocaml_string();
                         writeln!(w, "    {ident}: {ty};")?;
                     }
-                    let deriving = s
-                        .clone()
-                        .attrs
-                        .into_iter()
-                        .flat_map(|attr| {
-                            if syntax::api::attr_is_ocaml_deriving(&attr) {
-                                match &attr.tokens.clone().into_iter().collect::<Vec<_>>()[..] {
-                                    [proc_macro2::TokenTree::Group(group)] => group
-                                        .stream()
-                                        .into_iter()
-                                        .filter_map(|elem| match elem {
-                                            proc_macro2::TokenTree::Ident(ident) => {
-                                                Some(ident.to_string())
-                                            }
-                                            _ => None,
-                                        })
-                                        .collect(),
-                                    _ => vec![],
-                                }
-                            } else {
-                                vec![]
-                            }
-                        })
-                        .collect::<Vec<_>>();
-                    let deriving = if deriving.is_empty() {
-                        "".to_string()
-                    } else {
-                        format!("[@@deriving {}]", deriving.join(","))
-                    };
+                    let deriving = ocaml_deriving(&s.attrs);
                     writeln!(w, "  }} [@@boxed]{};;", deriving)?;
                 }
                 ApiItem::Type(i) => {
                     writeln!(w, "  type {};;", syntax::api::ocamlize(&i.ident.to_string()))?;
+                }
+                ApiItem::Include(include) => {
+                    writeln!(w, "{}", include)?;
                 }
                 ApiItem::Other(_) => {}
             }
@@ -171,11 +177,12 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                         }
                     }
                 }
-                ApiItem::ForeignMod { lang: Lang::OCaml, .. } => {}
-                ApiItem::Enum(_) => {}
-                ApiItem::Struct(_) => {}
-                ApiItem::Type(_) => {}
-                ApiItem::Other(_) => {}
+                ApiItem::ForeignMod { lang: Lang::OCaml, .. }
+                | ApiItem::Include(_)
+                | ApiItem::Enum(_)
+                | ApiItem::Struct(_)
+                | ApiItem::Type(_)
+                | ApiItem::Other(_) => {}
             }
         }
         writeln!(w, "end")?;

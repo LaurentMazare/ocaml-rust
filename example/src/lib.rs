@@ -64,6 +64,9 @@ mod ffi2 {
 
 #[ocaml_rust::bridge]
 mod ffi3 {
+    // The following is included in the generated OCaml code.
+    ocaml_include!("open! Sexplib.Conv");
+
     #[derive(Debug, Clone)]
     enum MyEnum {
         NoArg,
@@ -73,7 +76,7 @@ mod ffi3 {
         // Rec(Box<MyEnum>),
     }
 
-    // #[ocaml_deriving(sexp)]
+    #[ocaml_deriving(sexp)]
     #[derive(Debug, Clone)]
     struct MyStruct {
         x: isize,

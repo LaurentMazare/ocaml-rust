@@ -47,11 +47,13 @@ let%expect_test _ =
   Stdio.printf "<%s>\n%!" (Ffi3.mystruct_to_string t);
   let t = Ffi3.mystruct_add_x t 1337 in
   Stdio.printf "<%s>\n%!" (Ffi3.mystruct_to_string t);
+  Stdio.printf "%s\n" (Ffi3.sexp_of_my_struct t |> Sexp.to_string);
   [%expect
     {|
     ==== Test Struct ====
     <MyStruct { x: 42, y: "foo", z: (1337, None, 3.14), zs: [3.14, 2.71828182846] }>
-    <MyStruct { x: 1379, y: "foo", z: (1337, None, 3.14), zs: [3.14, 2.71828182846] }> |}]
+    <MyStruct { x: 1379, y: "foo", z: (1337, None, 3.14), zs: [3.14, 2.71828182846] }>
+    ((x 1379)(y foo)(z(1337()3.14))(zs(3.14 2.71828182846))) |}]
 
 let%expect_test _ =
   Stdio.printf "\n==== Test Enum ====\n";
@@ -92,9 +94,10 @@ let%expect_test _ =
   with
   | exn ->
     Stdio.printf "failed as expected, %s\n%!" (Exn.to_string exn);
-    [%expect {|
+    [%expect
+      {|
       failed as expected, (Failure
-        "panicked at 'called `Result::unwrap()` on an `Err` value: ocaml exn: Failure(\"ocaml-failwith\")', example/src/lib.rs:130:31") |}]
+        "panicked at 'called `Result::unwrap()` on an `Err` value: ocaml exn: Failure(\"ocaml-failwith\")', example/src/lib.rs:133:31") |}]
 
 let%expect_test _ =
   Stdio.printf "\n==== Test Custom Drop ====\n";

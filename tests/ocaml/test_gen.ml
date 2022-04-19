@@ -49,6 +49,7 @@ module Ffi2 = struct
 
 end
 module Ffi3 = struct
+open! Sexplib.Conv
   type my_enum =
   | NoArg
   | OneArg of int
@@ -60,7 +61,7 @@ module Ffi3 = struct
     y: string;
     z: (int * string option * float);
     zs: float array;
-  } [@@boxed];;
+  } [@@boxed][@@deriving sexp];;
   external mystruct_to_string
     : my_struct -> string
     = "__ocaml_ffi3_mystruct_to_string"
