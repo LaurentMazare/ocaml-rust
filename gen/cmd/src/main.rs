@@ -2,7 +2,6 @@ mod syntax;
 use crate::syntax::api::{ApiItem, Lang, ModItem};
 use crate::syntax::file::File;
 use clap::Parser;
-use quote::ToTokens;
 use std::io::{Read, Write};
 
 const HEADER: &str = r#"

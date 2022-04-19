@@ -1,5 +1,6 @@
 use crate::value::Value;
 pub trait FromSysValue: Sized {
+    #[doc(hidden)]
     unsafe fn from_value(v: ocaml_sys::Value) -> Self;
 }
 
@@ -45,6 +46,7 @@ impl FromSysValue for String {
     }
 }
 
+#[doc(hidden)]
 pub unsafe fn check_tag(kind: &str, v: ocaml_sys::Value, expected: u8) {
     if ocaml_sys::is_long(v) {
         let v = ocaml_sys::int_val(v);

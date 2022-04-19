@@ -13,11 +13,13 @@ where
     phantom_data: std::marker::PhantomData<&'a T>,
 }
 
+#[doc(hidden)]
 pub unsafe fn new<'a, T>(value: ocaml_sys::Value) -> Value<'a, T> {
     Value { value, phantom_data: std::marker::PhantomData }
 }
 
 impl<'a, T> Value<'a, T> {
+    #[doc(hidden)]
     pub unsafe fn new(value: ocaml_sys::Value) -> Value<'a, T> {
         new(value)
     }

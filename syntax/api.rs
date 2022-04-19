@@ -6,6 +6,7 @@ use syn::parse::{Error, Parse, ParseStream, Result};
 use syn::spanned::Spanned;
 use syn::{braced, token, Abi, Attribute, Ident, Token};
 
+#[allow(dead_code)]
 pub fn ocamlize(s: &str) -> String {
     let mut res = vec![];
     for (i, c) in s.chars().enumerate() {
@@ -101,6 +102,7 @@ impl Type {
         Err(Error::new_spanned(ty, format!("unsupported type {}", ty.to_token_stream())))
     }
 
+    #[allow(dead_code)]
     pub fn to_ocaml_string(&self) -> String {
         match self {
             Self::Unit => "unit".to_string(),
@@ -515,11 +517,13 @@ fn is_ref(ty: &syn::Type) -> bool {
 }
 
 impl Api {
+    #[allow(dead_code)]
     pub fn c_fn_name(&self, ident: &proc_macro2::Ident) -> String {
         let api_ident = &self.ident;
         format!("__ocaml_{api_ident}_{ident}")
     }
 
+    #[allow(dead_code)]
     pub fn expand(&self) -> syn::Result<proc_macro2::TokenStream> {
         let abstract_types = self.abstract_types();
         let mut expanded = proc_macro2::TokenStream::new();
@@ -599,6 +603,7 @@ impl Api {
         Ok(expanded)
     }
 
+    #[allow(dead_code)]
     pub fn abstract_types(&self) -> BTreeSet<proc_macro2::Ident> {
         self.api_items
             .iter()
