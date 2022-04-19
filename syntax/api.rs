@@ -106,7 +106,12 @@ impl Type {
     pub fn to_ocaml_string(&self) -> String {
         match self {
             Self::Unit => "unit".to_string(),
-            Self::Ident(ident) => ocamlize(&ident.to_string()),
+            Self::Ident(ident) => match ident.to_string().as_str() {
+                "isize" => "int".to_string(),
+                "i64" => "Int64.t".to_string(),
+                "f64" => "float".to_string(),
+                ident => ocamlize(ident),
+            },
             Self::Tuple(tuple) => {
                 let v: Vec<_> = tuple.iter().map(|x| x.to_ocaml_string()).collect();
                 format!("({})", v.join(" * "))

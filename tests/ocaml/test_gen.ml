@@ -1,36 +1,31 @@
-
-type isize = int;;
-type i64 = Int64.t;;
-type f64 = float;;
-
 module Ffi = struct
   external add_one
-    : isize -> isize
+    : int -> int
     = "__ocaml_ffi_add_one"
   ;;
 
   external add_i64
-    : i64 -> i64 -> i64
+    : Int64.t -> Int64.t -> Int64.t
     = "__ocaml_ffi_add_i64"
   ;;
 
   external str_format
-    : (isize * isize) -> string -> string
+    : (int * int) -> string -> string
     = "__ocaml_ffi_str_format"
   ;;
 
   external pair
-    : (string * f64 * (isize * isize)) -> string
+    : (string * float * (int * int)) -> string
     = "__ocaml_ffi_pair"
   ;;
 
   external option_result
-    : isize option -> string -> (isize, string) Result.t
+    : int option -> string -> (int, string) Result.t
     = "__ocaml_ffi_option_result"
   ;;
 
   external vec_add
-    : isize array -> isize -> isize array
+    : int array -> int -> int array
     = "__ocaml_ffi_vec_add"
   ;;
 
@@ -43,12 +38,12 @@ module Ffi2 = struct
   ;;
 
   external vec_push
-    : my_vec -> isize -> unit
+    : my_vec -> int -> unit
     = "__ocaml_ffi2_vec_push"
   ;;
 
   external vec_content
-    : my_vec -> i64 array
+    : my_vec -> Int64.t array
     = "__ocaml_ffi2_vec_content"
   ;;
 
@@ -56,15 +51,15 @@ end
 module Ffi3 = struct
   type my_enum =
   | NoArg
-  | OneArg of isize
-  | TwoArgs of isize * string
-  | StructArgs of { x: isize; y: string }
+  | OneArg of int
+  | TwoArgs of int * string
+  | StructArgs of { x: int; y: string }
   [@@boxed];;
   type my_struct = {
-    x: isize;
+    x: int;
     y: string;
-    z: (isize * string option * f64);
-    zs: f64 array;
+    z: (int * string option * float);
+    zs: float array;
   } [@@boxed];;
   external mystruct_to_string
     : my_struct -> string
@@ -72,7 +67,7 @@ module Ffi3 = struct
   ;;
 
   external mystruct_add_x
-    : my_struct -> isize -> my_struct
+    : my_struct -> int -> my_struct
     = "__ocaml_ffi3_mystruct_add_x"
   ;;
 
@@ -82,19 +77,19 @@ module Ffi3 = struct
   ;;
 
   external myenum_add_x
-    : my_enum -> isize -> my_enum
+    : my_enum -> int -> my_enum
     = "__ocaml_ffi3_myenum_add_x"
   ;;
 
 end
 module Ffi4 = struct
   external map_callback
-    : isize array -> ((isize) -> (string)) -> string array
+    : int array -> ((int) -> (string)) -> string array
     = "__ocaml_ffi4_map_callback"
   ;;
 
   external sum_n
-    : isize -> (unit -> (isize)) -> isize
+    : int -> (unit -> (int)) -> int
     = "__ocaml_ffi4_sum_n"
   ;;
 
@@ -102,7 +97,7 @@ end
 module Ffi5 = struct
   type foo_a;;
   external create_foo
-    : isize -> foo_a
+    : int -> foo_a
     = "__ocaml_ffi5_create_foo"
   ;;
 

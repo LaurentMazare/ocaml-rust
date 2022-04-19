@@ -4,13 +4,6 @@ use crate::syntax::file::File;
 use clap::Parser;
 use std::io::{Read, Write};
 
-const HEADER: &str = r#"
-type isize = int;;
-type i64 = Int64.t;;
-type f64 = float;;
-
-"#;
-
 fn read_to_string<P>(path: &P) -> Result<String, std::io::Error>
 where
     P: AsRef<std::path::Path>,
@@ -55,7 +48,6 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
     proc_macro2::fallback::force();
     let file: File = syn::parse_str(&rust_source)?;
     let mut w = std::fs::File::create(args.ocaml_file)?;
-    w.write(HEADER.as_bytes())?;
     for api in file.apis.iter() {
         writeln!(w, "module {} = struct", capitalize(&api.ident.to_string()))?;
         for api_item in api.api_items.iter() {
