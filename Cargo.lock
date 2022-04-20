@@ -167,9 +167,9 @@ dependencies = [
 
 [[package]]
 name = "ocaml-sys"
-version = "0.22.2"
+version = "0.22.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3a82e23e7ec3859467afde0a9f459d430312bff1956e3cf1b0e515bc5baab9c"
+checksum = "73ec6ca7d41458442627435afb8f4671e83fd642e8a560171d671a1f679aa3cf"
 dependencies = [
  "cty",
 ]
