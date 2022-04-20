@@ -97,6 +97,10 @@ impl Type {
                 return Ok(Self::Tuple(v?));
             }
             syn::Type::Reference(type_reference) => return Self::parse_type(&type_reference.elem),
+            syn::Type::Slice(slice) => {
+                let ty = Type::parse_type(&slice.elem)?;
+                return Ok(Type::VecArray(Box::new(ty)));
+            }
             _ => {}
         }
         Err(Error::new_spanned(ty, format!("unsupported type {}", ty.to_token_stream())))
