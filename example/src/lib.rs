@@ -125,7 +125,7 @@ mod ffi4 {
     }
 }
 
-fn map_callback(vs: &Vec<isize>, f: &mut Fn1<isize, String>) -> Vec<String> {
+fn map_callback(vs: &[isize], f: &mut Fn1<isize, String>) -> Vec<String> {
     vs.iter().map(|x| f.call1(*x).unwrap()).collect()
 }
 

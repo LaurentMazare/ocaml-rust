@@ -5,7 +5,19 @@ on:
   - push
 
 jobs:
-  fmt:
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - run: rustup component add clippy
+      - run: make clippy
+
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:

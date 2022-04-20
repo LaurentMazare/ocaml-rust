@@ -597,6 +597,7 @@ impl Api {
                                 pub extern "C" fn #ocaml_ident(#(#arg_with_types),*) -> ocaml_sys::Value {
                                     ocaml_rust::initial_setup();
                                     #(#args_conv)*;
+                                    #[allow(clippy::unnecessary_mut_passed)]
                                     let res = #ident(#(#args),*);
                                     #post_process_res
                                 } })

@@ -46,10 +46,9 @@ fn capitalize(s: &str) -> String {
 
 fn ocaml_deriving(attrs: &[Attribute]) -> String {
     let deriving = attrs
-        .clone()
-        .into_iter()
+        .iter()
         .flat_map(|attr| {
-            if syntax::api::attr_is_ocaml_deriving(&attr) {
+            if syntax::api::attr_is_ocaml_deriving(attr) {
                 match &attr.tokens.clone().into_iter().collect::<Vec<_>>()[..] {
                     [proc_macro2::TokenTree::Group(group)] => group
                         .stream()
@@ -106,13 +105,13 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                                     .iter()
                                     .map(|x| {
                                         let field_ident = match &x.ident {
-                                            None => Err(syn::Error::new_spanned(
-                                                &x,
-                                                format!(
+                                            None => {
+                                                let msg = format!(
                                                     "struct with unnamed field {} in enum",
                                                     variant_ident
-                                                ),
-                                            ))?,
+                                                );
+                                                return Err(syn::Error::new_spanned(&x, msg).into());
+                                            }
                                             Some(ident) => ident.to_string(),
                                         };
                                         let ty =
@@ -133,10 +132,13 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                     writeln!(w, "  type {} = {{", syntax::api::ocamlize(&s.ident.to_string()))?;
                     for field in s.fields.iter() {
                         let ident = match &field.ident {
-                            None => Err(syn::Error::new_spanned(
-                                &field,
-                                format!("struct with unnamed field {}", s.ident),
-                            ))?,
+                            None => {
+                                return Err(syn::Error::new_spanned(
+                                    &field,
+                                    format!("struct with unnamed field {}", s.ident),
+                                )
+                                .into())
+                            }
                             Some(ident) => ident,
                         };
                         let ty = syntax::api::Type::parse_type(&field.ty)?.to_ocaml_string();
@@ -160,7 +162,7 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                     for item in items {
                         match item {
                             ModItem::Fn { ident, args, output } => {
-                                let args = if args.len() > 0 {
+                                let args = if !args.is_empty() {
                                     let args: Result<Vec<std::string::String>, syn::parse::Error> =
                                         args.iter()
                                             .map(|(_ident, _ty, typ)| Ok(typ.to_ocaml_string()))
@@ -172,7 +174,7 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                                 let output = output.to_ocaml_string();
                                 writeln!(w, "  external {}", ident)?;
                                 writeln!(w, "    : {} -> {}", args, output)?;
-                                writeln!(w, "    = \"{}\"\n  ;;\n", api.c_fn_name(&ident))?;
+                                writeln!(w, "    = \"{}\"\n  ;;\n", api.c_fn_name(ident))?;
                             }
                         }
                     }
