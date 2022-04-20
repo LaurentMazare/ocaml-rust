@@ -13,7 +13,7 @@ test-exe:
 	dune exec --root=tests/ocaml ./test_cmd.exe
 
 clippy:
-	cargo clippy ---manifest-path ./macro/Cargo.toml
-	cargo clippy ---manifest-path ./gen/cmd/Cargo.toml
-	cargo clippy ---manifest-path ./example/Cargo.toml
+	cargo clippy --manifest-path ./macro/Cargo.toml
+	cargo clippy --manifest-path ./gen/cmd/Cargo.toml
+	cargo clippy --manifest-path ./example/Cargo.toml
 	cargo clippy
