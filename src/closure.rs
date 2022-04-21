@@ -21,6 +21,16 @@ where
     }
 }
 
+fn handle_exn<'a, R: 'static + FromSysValue>(r: ocaml_sys::Value) -> crate::exn::Result<'a, R> {
+    if ocaml_sys::is_exception_result(r) {
+        let exn = ocaml_sys::extract_exception(r);
+        let exn: crate::exn::OCamlError<'a> = unsafe { crate::value::Value::new(exn) };
+        Err(exn)
+    } else {
+        Ok(unsafe { R::from_value(r) })
+    }
+}
+
 impl<Res> Fn0<Res>
 where
     Res: 'static + FromSysValue,
@@ -28,14 +38,7 @@ where
     // This uses [mut self] as this can result in side effects on the ocaml side.
     pub fn call0<'a>(&mut self) -> crate::exn::Result<'a, Res> {
         let f = self.f.value().value;
-        let res = unsafe { ocaml_sys::caml_callback_exn(f, ocaml_sys::UNIT) };
-        if ocaml_sys::is_exception_result(res) {
-            let exn = ocaml_sys::extract_exception(res);
-            let exn: crate::exn::OCamlError<'a> = unsafe { crate::value::Value::new(exn) };
-            Err(exn)
-        } else {
-            Ok(unsafe { Res::from_value(res) })
-        }
+        handle_exn(unsafe { ocaml_sys::caml_callback_exn(f, ocaml_sys::UNIT) })
     }
 }
 
@@ -70,14 +73,7 @@ where
     pub fn call1<'a>(&mut self, arg: Arg) -> crate::exn::Result<'a, Res> {
         let f = self.f.value().value;
         let arg = arg.to_value(|x| x);
-        let res = unsafe { ocaml_sys::caml_callback_exn(f, arg) };
-        if ocaml_sys::is_exception_result(res) {
-            let exn = ocaml_sys::extract_exception(res);
-            let exn: crate::exn::OCamlError<'a> = unsafe { crate::value::Value::new(exn) };
-            Err(exn)
-        } else {
-            Ok(unsafe { Res::from_value(res) })
-        }
+        handle_exn(unsafe { ocaml_sys::caml_callback_exn(f, arg) })
     }
 }
 
@@ -114,14 +110,7 @@ where
         let f = self.f.value().value;
         let arg1 = arg1.to_value(|x| x);
         let arg2 = arg2.to_value(|x| x);
-        let res = unsafe { ocaml_sys::caml_callback2_exn(f, arg1, arg2) };
-        if ocaml_sys::is_exception_result(res) {
-            let exn = ocaml_sys::extract_exception(res);
-            let exn: crate::exn::OCamlError<'a> = unsafe { crate::value::Value::new(exn) };
-            Err(exn)
-        } else {
-            Ok(unsafe { Res::from_value(res) })
-        }
+        handle_exn(unsafe { ocaml_sys::caml_callback2_exn(f, arg1, arg2) })
     }
 }
 
@@ -162,13 +151,6 @@ where
         let arg1 = arg1.to_value(|x| x);
         let arg2 = arg2.to_value(|x| x);
         let arg3 = arg3.to_value(|x| x);
-        let res = unsafe { ocaml_sys::caml_callback3_exn(f, arg1, arg2, arg3) };
-        if ocaml_sys::is_exception_result(res) {
-            let exn = ocaml_sys::extract_exception(res);
-            let exn: crate::exn::OCamlError<'a> = unsafe { crate::value::Value::new(exn) };
-            Err(exn)
-        } else {
-            Ok(unsafe { Res::from_value(res) })
-        }
+        handle_exn(unsafe { ocaml_sys::caml_callback3_exn(f, arg1, arg2, arg3) })
     }
 }
