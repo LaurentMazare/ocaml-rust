@@ -62,6 +62,9 @@ impl Type {
                                 if ident == "Fn0" {
                                     return Ok(Type::Fn0(Box::new(ty)));
                                 }
+                                if ident == "Box" {
+                                    return Ok(ty);
+                                }
                             }
                         }
                         syn::PathArguments::AngleBracketed(
@@ -106,6 +109,8 @@ impl Type {
             Self::Unit => "unit".to_string(),
             Self::Ident(ident) => match ident.to_string().as_str() {
                 "isize" => "int".to_string(),
+                "usize" => "int".to_string(),
+                "i32" => "Int32.t".to_string(),
                 "i64" => "Int64.t".to_string(),
                 "f64" => "float".to_string(),
                 ident => ocamlize(ident),

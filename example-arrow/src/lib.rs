@@ -1,3 +1,4 @@
+use arrow::datatypes::DataType as DT;
 use ocaml_rust::Custom;
 use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
 use parquet::file::reader::{FileReader, SerializedFileReader};
@@ -51,13 +52,74 @@ fn schema(reader: &Reader) -> ocaml_rust::RustResult<Schema> {
         .iter()
         .map(|field| SchemaField {
             name: field.name().to_string(),
-            data_type: field.data_type().to_string(),
+            data_type: DataType::of_arrow(field.data_type()),
             nullable: field.is_nullable(),
         })
         .collect();
     let metadata: Vec<(String, String)> =
         schema.metadata().iter().map(|(x, y)| (x.to_string(), y.to_string())).collect();
     Ok(Schema { fields, metadata })
+}
+
+impl IntervalUnit {
+    fn of_arrow(unit: &arrow::datatypes::IntervalUnit) -> Self {
+        match unit {
+            arrow::datatypes::IntervalUnit::YearMonth => Self::YearMonth,
+            arrow::datatypes::IntervalUnit::DayTime => Self::DayTime,
+            arrow::datatypes::IntervalUnit::MonthDayNano => Self::MonthDayNano,
+        }
+    }
+}
+
+impl TimeUnit {
+    fn of_arrow(unit: &arrow::datatypes::TimeUnit) -> Self {
+        match unit {
+            arrow::datatypes::TimeUnit::Second => Self::Second,
+            arrow::datatypes::TimeUnit::Millisecond => Self::Millisecond,
+            arrow::datatypes::TimeUnit::Microsecond => Self::Microsecond,
+            arrow::datatypes::TimeUnit::Nanosecond => Self::Nanosecond,
+        }
+    }
+}
+
+impl DataType {
+    fn of_arrow(data_type: &DT) -> Self {
+        match data_type {
+            DT::Null => Self::Null,
+            DT::Boolean => Self::Boolean,
+            DT::Int8 => Self::Int8,
+            DT::Int16 => Self::Int16,
+            DT::Int32 => Self::Int32,
+            DT::Int64 => Self::Int64,
+            DT::UInt8 => Self::UInt8,
+            DT::UInt16 => Self::UInt16,
+            DT::UInt32 => Self::UInt32,
+            DT::UInt64 => Self::UInt64,
+            DT::Float16 => Self::Float16,
+            DT::Float32 => Self::Float32,
+            DT::Float64 => Self::Float64,
+            DT::Timestamp(unit, zone) => Self::Timestamp(TimeUnit::of_arrow(unit), zone.clone()),
+            DT::Date32 => Self::Date32,
+            DT::Date64 => Self::Date64,
+            DT::Time32(unit) => Self::Time32(TimeUnit::of_arrow(unit)),
+            DT::Time64(unit) => Self::Time64(TimeUnit::of_arrow(unit)),
+            DT::Duration(unit) => Self::Duration(TimeUnit::of_arrow(unit)),
+            DT::Interval(unit) => Self::Interval(IntervalUnit::of_arrow(unit)),
+            DT::Binary => Self::Binary,
+            DT::FixedSizeBinary(size) => Self::FixedSizeBinary(*size as isize),
+            DT::LargeBinary => Self::LargeBinary,
+            DT::Utf8 => Self::Utf8,
+            DT::LargeUtf8 => Self::LargeUtf8,
+            DT::List(_) => Self::List,
+            DT::FixedSizeList(_, _) => Self::FixedSizeList,
+            DT::LargeList(_) => Self::LargeList,
+            DT::Struct(_) => Self::Struct,
+            DT::Union(_, _) => Self::Union,
+            DT::Dictionary(_, _) => Self::Dictionary,
+            DT::Decimal(s1, s2) => Self::Decimal(*s1, *s2),
+            DT::Map(_, _) => Self::Map,
+        }
+    }
 }
 
 // TODO: These should be derived automatically when needed.
@@ -68,6 +130,61 @@ impl ocaml_rust::from_value::NotF64 for SchemaField {}
 mod arrow {
     ocaml_include!("open! Sexplib.Conv");
     type Reader = Custom<ParquetReader>;
+
+    #[ocaml_deriving(sexp)]
+    #[derive(Debug, Clone)]
+    enum IntervalUnit {
+        YearMonth,
+        DayTime,
+        MonthDayNano,
+    }
+
+    #[ocaml_deriving(sexp)]
+    #[derive(Debug, Clone)]
+    enum TimeUnit {
+        Second,
+        Millisecond,
+        Microsecond,
+        Nanosecond,
+    }
+
+    #[ocaml_deriving(sexp)]
+    #[derive(Debug, Clone)]
+    enum DataType {
+        Null,
+        Boolean,
+        Int8,
+        Int16,
+        Int32,
+        Int64,
+        UInt8,
+        UInt16,
+        UInt32,
+        UInt64,
+        Float16,
+        Float32,
+        Float64,
+        Timestamp(TimeUnit, Option<String>),
+        Date32,
+        Date64,
+        Time32(TimeUnit),
+        Time64(TimeUnit),
+        Duration(TimeUnit),
+        Interval(IntervalUnit),
+        Binary,
+        FixedSizeBinary(isize),
+        LargeBinary,
+        Utf8,
+        LargeUtf8,
+        List,
+        FixedSizeList,
+        LargeList,
+        Struct,
+        Union,
+        Dictionary, // TODO: Support recursive types.
+        Decimal(usize, usize),
+        Map,
+    }
 
     #[ocaml_deriving(sexp)]
     #[derive(Debug, Clone)]
@@ -90,7 +207,7 @@ mod arrow {
     #[derive(Debug, Clone)]
     struct SchemaField {
         name: String,
-        data_type: String,
+        data_type: DataType,
         nullable: bool,
     }
 

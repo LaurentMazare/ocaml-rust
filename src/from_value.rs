@@ -14,6 +14,12 @@ impl FromSysValue for isize {
     }
 }
 
+impl FromSysValue for usize {
+    unsafe fn from_value(v: ocaml_sys::Value) -> Self {
+        ocaml_sys::int_val(v) as usize
+    }
+}
+
 impl FromSysValue for bool {
     unsafe fn from_value(v: ocaml_sys::Value) -> Self {
         ocaml_sys::int_val(v) != 0
@@ -24,6 +30,14 @@ impl FromSysValue for f64 {
     unsafe fn from_value(v: ocaml_sys::Value) -> Self {
         check_tag("double", v, ocaml_sys::DOUBLE);
         *(v as *const f64)
+    }
+}
+
+impl FromSysValue for i32 {
+    unsafe fn from_value(v: ocaml_sys::Value) -> Self {
+        check_tag("i32", v, ocaml_sys::CUSTOM);
+        let v = ocaml_sys::field(v, 1);
+        *(v as *const i32)
     }
 }
 
@@ -180,6 +194,15 @@ where
             vs.push(FromSysValue::from_value(*t));
         }
         vs
+    }
+}
+
+impl<T> FromSysValue for Box<T>
+where
+    T: FromSysValue,
+{
+    unsafe fn from_value(v: ocaml_sys::Value) -> Self {
+        Box::new(T::from_value(v))
     }
 }
 

@@ -15,6 +15,16 @@ impl ToValue for () {
     }
 }
 
+impl ToValue for i32 {
+    fn to_value<F, U>(&self, pin: F) -> U
+    where
+        U: Sized,
+        F: FnOnce(ocaml_sys::Value) -> U,
+    {
+        pin(unsafe { ocaml_sys::caml_copy_int32(*self) })
+    }
+}
+
 impl ToValue for i64 {
     fn to_value<F, U>(&self, pin: F) -> U
     where
@@ -42,6 +52,16 @@ impl ToValue for isize {
         F: FnOnce(ocaml_sys::Value) -> U,
     {
         pin(unsafe { ocaml_sys::val_int(*self) })
+    }
+}
+
+impl ToValue for usize {
+    fn to_value<F, U>(&self, pin: F) -> U
+    where
+        U: Sized,
+        F: FnOnce(ocaml_sys::Value) -> U,
+    {
+        pin(unsafe { ocaml_sys::val_int(*self as isize) })
     }
 }
 
