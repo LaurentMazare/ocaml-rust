@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Laurent Mazare <lmazare@gmail.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/LaurentMazare/ocaml-rust"
-exclude = ["/example", "/gen"]
+exclude = ["/example", "/gen", "/example-arrow"]
 
 [dependencies]
 ocaml-sys = "0.22.3"
@@ -15,7 +15,7 @@ thiserror = "1"
 libc = "0.2.122"
 
 [workspace]
-members = ["example", "gen/cmd", "macro"]
+members = ["example", "gen/cmd", "macro", "example-arrow"]
 
 [patch.crates-io]
 ocaml-rust = { path = "." }
