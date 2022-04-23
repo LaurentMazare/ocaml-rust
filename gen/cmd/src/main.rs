@@ -97,7 +97,7 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                                     })
                                     .collect();
                                 let args = args?.join(" * ");
-                                format!(" of {args}")
+                                format!(" of {}", args)
                             }
                             syn::Fields::Named(n) => {
                                 let args: Result<Vec<String>, syntax::Error> = n
@@ -116,14 +116,14 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                                         };
                                         let ty =
                                             syntax::api::Type::parse_type(&x.ty)?.to_ocaml_string();
-                                        Ok(format!("{field_ident}: {ty}"))
+                                        Ok(format!("{}: {}", field_ident, ty))
                                     })
                                     .collect();
                                 let args = args?.join("; ");
-                                format!(" of {{ {args} }}")
+                                format!(" of {{ {} }}", args)
                             }
                         };
-                        writeln!(w, "  | {variant_ident}{args}")?;
+                        writeln!(w, "  | {}{}", variant_ident, args)?;
                     }
                     let deriving = ocaml_deriving(&e.attrs);
                     writeln!(w, "  [@@boxed]{};;", deriving)?;
