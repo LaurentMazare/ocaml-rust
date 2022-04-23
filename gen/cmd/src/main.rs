@@ -142,7 +142,7 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                             Some(ident) => ident,
                         };
                         let ty = syntax::api::Type::parse_type(&field.ty)?.to_ocaml_string();
-                        writeln!(w, "    {ident}: {ty};")?;
+                        writeln!(w, "    {}: {};", ident, ty)?;
                     }
                     let deriving = ocaml_deriving(&s.attrs);
                     writeln!(w, "  }} [@@boxed]{};;", deriving)?;
