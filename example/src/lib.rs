@@ -167,6 +167,7 @@ type C = Custom<Foo>;
 
 #[ocaml_rust::bridge]
 mod ffi6 {
+    // TODO: this type definition should be automatically generated.
     ocaml_include!("type c");
     extern "Rust" {
         fn create_foo2(v: isize) -> C;
