@@ -1,5 +1,4 @@
 use quote::ToTokens;
-use std::collections::BTreeSet;
 use syn::parse::{Error, Parse, ParseStream, Result};
 use syn::spanned::Spanned;
 use syn::{braced, token, Abi, Attribute, Ident, Token};
@@ -33,13 +32,6 @@ pub enum Type {
 }
 
 impl Type {
-    pub(crate) fn is_abstract(&self, abstract_types: &BTreeSet<proc_macro2::Ident>) -> bool {
-        match self {
-            Type::Ident(ident) => abstract_types.contains(ident),
-            _ => false,
-        }
-    }
-
     pub fn parse_type(ty: &syn::Type) -> Result<Type> {
         match ty {
             syn::Type::Path(ty) => {

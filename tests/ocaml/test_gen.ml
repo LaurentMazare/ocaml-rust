@@ -95,21 +95,8 @@ module Ffi4 = struct
   ;;
 
 end
-module Ffi5 = struct
-  type foo_a;;
-  external create_foo
-    : int -> foo_a
-    = "__ocaml_ffi5_create_foo"
-  ;;
-
-  external foo_to_string
-    : foo_a -> string
-    = "__ocaml_ffi5_foo_to_string"
-  ;;
-
-end
 module Ffi6 = struct
-type c
+  type c;;
   external create_foo2
     : int -> c
     = "__ocaml_ffi6_create_foo2"

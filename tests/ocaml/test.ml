@@ -93,25 +93,7 @@ let%expect_test _ =
     [%expect
       {|
       failed as expected, (Failure
-        "panicked at 'called `Result::unwrap()` on an `Err` value: ocaml exn: Failure(\"ocaml-failwith\")', example/src/lib.rs:133:31") |}]
-
-let%expect_test _ =
-  Stdio.printf "\n==== Test Custom Drop ====\n";
-  let foo1 = Ffi5.create_foo 42 in
-  let foo2 = Ffi5.create_foo 1337 in
-  Stdio.printf "%s\n%!" (Ffi5.foo_to_string foo1);
-  Stdio.printf "%s\n%!" (Ffi5.foo_to_string foo2);
-  [%expect {|
-    ==== Test Custom Drop ====
-    vFoo { v: 42 }
-    vFoo { v: 1337 } |}];
-  Caml.Gc.compact ();
-  [%expect {| dropping foo 1337 |}];
-  Stdio.printf "%s\n%!" (Ffi5.foo_to_string foo1);
-  Caml.Gc.compact ();
-  [%expect {|
-    vFoo { v: 42 }
-    dropping foo 42 |}]
+        "panicked at 'called `Result::unwrap()` on an `Err` value: ocaml exn: Failure(\"ocaml-failwith\")', example/src/lib.rs:135:31") |}]
 
 let%expect_test _ =
   Stdio.printf "\n==== Test Custom Drop ====\n";
@@ -119,7 +101,8 @@ let%expect_test _ =
   let foo2 = Ffi6.create_foo2 1337 in
   Stdio.printf "%s\n%!" (Ffi6.foo2_to_string foo1);
   Stdio.printf "%s\n%!" (Ffi6.foo2_to_string foo2);
-  [%expect {|
+  [%expect
+    {|
     ==== Test Custom Drop ====
     v: Foo { v: 42 }
     v: Foo { v: 1337 } |}];

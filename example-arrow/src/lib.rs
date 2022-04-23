@@ -8,8 +8,6 @@ struct ParquetReader {
     arrow_reader: ParquetFileArrowReader,
 }
 
-type Reader = Custom<ParquetReader>;
-
 fn reader(path: String) -> Result<Reader, String> {
     // TODO: Improve the error handling to avoid the [to_string] bit.
     let file = File::open(&path).map_err(|x| x.to_string())?;
@@ -70,8 +68,7 @@ impl ocaml_rust::from_value::NotF64 for SchemaField {}
 #[ocaml_rust::bridge]
 mod arrow {
     ocaml_include!("open! Sexplib.Conv");
-    // TODO: Get this generated automatically.
-    ocaml_include!("type reader");
+    type Reader = Custom<ParquetReader>;
 
     #[ocaml_deriving(sexp)]
     #[derive(Debug, Clone)]

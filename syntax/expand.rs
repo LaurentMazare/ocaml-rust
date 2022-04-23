@@ -1,4 +1,4 @@
-use super::api::{attr_is_ocaml_deriving, Api, ApiItem, ModItem, Type};
+use super::api::{attr_is_ocaml_deriving, Api, ApiItem, ModItem};
 use quote::{quote, ToTokens};
 use std::collections::BTreeSet;
 use syn::parse::Error;
@@ -274,14 +274,13 @@ impl Api {
 
     #[allow(dead_code)]
     pub fn expand(&self) -> syn::Result<proc_macro2::TokenStream> {
-        let abstract_types = self.abstract_types();
         let mut expanded = proc_macro2::TokenStream::new();
         for item in self.api_items.iter() {
             match item {
                 ApiItem::ForeignMod { attrs: _, lang: _, brace_token: _, items } => {
                     for item in items.iter() {
                         match item {
-                            ModItem::Fn { ident, args, output } => {
+                            ModItem::Fn { ident, args, output: _ } => {
                                 let ocaml_ident =
                                     syn::Ident::new(&self.c_fn_name(ident), ident.span());
                                 let arg_with_types: Vec<_> = args
@@ -289,17 +288,7 @@ impl Api {
                                     .map(|(ident, _ty, _ty2)| quote! { #ident: ocaml_sys::Value})
                                     .collect();
                                 let args_conv: Vec<_> =
-                                    args.iter().map(|(ident, ty, typ)| {
-                                        if typ.is_abstract(&abstract_types) {
-                                            let ty_ident = match typ {
-                                                Type::Ident(ident) => ident,
-                                                _ => panic!("must be ident"),
-                                            };
-                                            quote! {
-                                                let #ident: ocaml_rust::Value<Box<#ty_ident>> = unsafe { ocaml_rust::Value::new(#ident) };
-                                                let mut #ident = unsafe { &mut *ocaml_rust::custom::get(#ident).get() };
-                                            }
-                                        } else {
+                                    args.iter().map(|(ident, ty, _typ)| {
                                             let ty = match ty.as_ref() {
                                                 syn::Type::Reference(ty) => ty.elem.as_ref(),
                                                 other => other,
@@ -307,27 +296,20 @@ impl Api {
                                         quote! {
                                         let mut #ident = unsafe {
                                             <#ty as ocaml_rust::from_value::FromSysValue>::from_value(#ident) };
-                                        }}}).collect();
+                                        }}).collect();
                                 let args: Vec<_> = args
                                     .iter()
-                                    .map(|(ident, ty, typ)| {
-                                        if !typ.is_abstract(&abstract_types) && is_ref(ty.as_ref())
-                                        {
-                                            quote! { &mut #ident}
+                                    .map(|(ident, ty, _typ)| {
+                                        if is_ref(ty.as_ref()) {
+                                            quote! { &mut #ident }
                                         } else {
                                             quote! { #ident }
                                         }
                                     })
                                     .collect();
-                                let post_process_res = if output.is_abstract(&abstract_types) {
-                                    quote! {
-                                        ocaml_rust::gc::with_gc(|gc| ocaml_rust::custom::new(gc, res).value)
-                                    }
-                                } else {
-                                    quote! {
+                                let post_process_res = quote! {
                                         let rooted_res = ocaml_rust::to_value::to_rooted_value(&res);
                                         rooted_res.value().value
-                                    }
                                 };
                                 expanded.extend(quote! {
                                 #[no_mangle]

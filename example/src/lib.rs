@@ -40,24 +40,26 @@ mod ffi {
 }
 
 fn vec_new() -> MyVec {
-    Vec::new()
+    Custom::new(Vec::new())
 }
 
-fn vec_push(v: &mut MyVec, x: isize) {
+fn vec_push(v: &MyVec, x: isize) {
+    let mut v = v.inner().lock().unwrap();
     v.push(x as i64);
 }
 
 fn vec_content(v: &MyVec) -> Vec<i64> {
+    let v = v.inner().lock().unwrap();
     v.clone()
 }
 
 #[ocaml_rust::bridge]
 mod ffi2 {
-    type MyVec = Vec<i64>;
+    type MyVec = Custom<Vec<i64>>;
 
     extern "Rust" {
         fn vec_new() -> MyVec;
-        fn vec_push(vec: &mut MyVec, v: isize);
+        fn vec_push(vec: &MyVec, v: isize);
         fn vec_content(vec: &MyVec) -> Vec<i64>;
     }
 }
@@ -144,31 +146,11 @@ impl Drop for Foo {
     }
 }
 
-#[ocaml_rust::bridge]
-mod ffi5 {
-    type FooA = Foo;
-
-    extern "Rust" {
-        fn create_foo(v: isize) -> FooA;
-        fn foo_to_string(v: &FooA) -> String;
-    }
-}
-
-fn create_foo(v: isize) -> Foo {
-    Foo { v }
-}
-
-fn foo_to_string(v: &Foo) -> String {
-    format!("v{v:?}")
-}
-
 use ocaml_rust::Custom;
-type C = Custom<Foo>;
 
 #[ocaml_rust::bridge]
 mod ffi6 {
-    // TODO: this type definition should be automatically generated.
-    ocaml_include!("type c");
+    type C = Custom<Foo>;
     extern "Rust" {
         fn create_foo2(v: isize) -> C;
         fn foo2_to_string(v: &C) -> String;

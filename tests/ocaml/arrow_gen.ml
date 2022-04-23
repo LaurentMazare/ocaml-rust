@@ -1,6 +1,6 @@
 module Arrow = struct
 open! Sexplib.Conv
-type reader
+  type reader;;
   type row_group_metadata = {
     num_columns: int;
     num_rows: int;
