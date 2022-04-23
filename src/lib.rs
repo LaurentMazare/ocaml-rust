@@ -8,6 +8,7 @@ pub mod gc;
 pub mod rooted;
 pub mod to_value;
 pub mod value;
+pub use custom::Custom;
 pub use exn::OCamlExn;
 pub use ocaml_rust_macro::bridge;
 pub use rooted::RootedValue;

@@ -1,10 +1,6 @@
 open! Base
 open! Sexplib.Conv
-module Ffi = Test_gen.Ffi
-module Ffi2 = Test_gen.Ffi2
-module Ffi3 = Test_gen.Ffi3
-module Ffi4 = Test_gen.Ffi4
-module Ffi5 = Test_gen.Ffi5
+open! Test_gen
 
 type 'a res = ('a, string) Result.t [@@deriving sexp]
 
@@ -115,4 +111,22 @@ let%expect_test _ =
   Caml.Gc.compact ();
   [%expect {|
     vFoo { v: 42 }
+    dropping foo 42 |}]
+
+let%expect_test _ =
+  Stdio.printf "\n==== Test Custom Drop ====\n";
+  let foo1 = Ffi6.create_foo2 42 in
+  let foo2 = Ffi6.create_foo2 1337 in
+  Stdio.printf "%s\n%!" (Ffi6.foo2_to_string foo1);
+  Stdio.printf "%s\n%!" (Ffi6.foo2_to_string foo2);
+  [%expect {|
+    ==== Test Custom Drop ====
+    v: Foo { v: 42 }
+    v: Foo { v: 1337 } |}];
+  Caml.Gc.compact ();
+  [%expect {| dropping foo 1337 |}];
+  Stdio.printf "%s\n%!" (Ffi6.foo2_to_string foo1);
+  Caml.Gc.compact ();
+  [%expect {|
+    v: Foo { v: 42 }
     dropping foo 42 |}]

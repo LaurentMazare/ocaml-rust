@@ -161,3 +161,24 @@ fn create_foo(v: isize) -> Foo {
 fn foo_to_string(v: &Foo) -> String {
     format!("v{v:?}")
 }
+
+use ocaml_rust::Custom;
+type C = Custom<Foo>;
+
+#[ocaml_rust::bridge]
+mod ffi6 {
+    ocaml_include!("type c");
+    extern "Rust" {
+        fn create_foo2(v: isize) -> C;
+        fn foo2_to_string(v: &C) -> String;
+    }
+}
+
+fn create_foo2(v: isize) -> Custom<Foo> {
+    Custom::new(Foo { v })
+}
+
+fn foo2_to_string(v: &Custom<Foo>) -> String {
+    let v = v.inner().lock().unwrap();
+    format!("v: {v:?}")
+}

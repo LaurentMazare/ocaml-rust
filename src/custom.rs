@@ -52,6 +52,16 @@ pub struct Custom<T> {
     _inner: Arc<Mutex<T>>,
 }
 
+impl<T> Custom<T> {
+    pub fn new(t: T) -> Self {
+        Custom { _inner: Arc::new(Mutex::new(t)) }
+    }
+
+    pub fn inner(&self) -> &Mutex<T> {
+        &self._inner
+    }
+}
+
 impl<T: 'static> crate::to_value::ToValue for Custom<T> {
     fn to_value<F, U>(&self, pin: F) -> U
     where

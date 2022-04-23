@@ -108,3 +108,16 @@ module Ffi5 = struct
   ;;
 
 end
+module Ffi6 = struct
+type c
+  external create_foo2
+    : int -> c
+    = "__ocaml_ffi6_create_foo2"
+  ;;
+
+  external foo2_to_string
+    : c -> string
+    = "__ocaml_ffi6_foo2_to_string"
+  ;;
+
+end
