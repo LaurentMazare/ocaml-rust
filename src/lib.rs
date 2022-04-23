@@ -2,6 +2,7 @@
 //   - Call from Rust, start the OCaml runtime in that case?
 pub mod closure;
 pub mod custom;
+pub mod error;
 pub mod exn;
 pub mod from_value;
 pub mod gc;
@@ -9,6 +10,7 @@ pub mod rooted;
 pub mod to_value;
 pub mod value;
 pub use custom::Custom;
+pub use error::{RustError, RustResult};
 pub use exn::OCamlExn;
 pub use ocaml_rust_macro::bridge;
 pub use rooted::RootedValue;

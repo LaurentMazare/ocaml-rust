@@ -269,7 +269,7 @@ impl Api {
     #[allow(dead_code)]
     pub fn c_fn_name(&self, ident: &proc_macro2::Ident) -> String {
         let api_ident = &self.ident;
-        format!("__ocaml_{api_ident}_{ident}")
+        format!("__ocaml_{}_{}", api_ident, ident)
     }
 
     #[allow(dead_code)]

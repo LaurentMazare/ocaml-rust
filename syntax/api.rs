@@ -25,6 +25,7 @@ pub enum Type {
     Tuple(Vec<Type>),
     VecArray(Box<Type>),
     VecList(Box<Type>),
+    RustResult(Box<Type>),
     Option(Box<Type>),
     Result(Box<Type>, Box<Type>),
     Fn0(Box<Type>),
@@ -36,8 +37,8 @@ impl Type {
         match ty {
             syn::Type::Path(ty) => {
                 let path = &ty.path;
-                if ty.qself.is_none() && path.leading_colon.is_none() && path.segments.len() == 1 {
-                    let segment = &path.segments[0];
+                if ty.qself.is_none() && path.leading_colon.is_none() && !path.segments.is_empty() {
+                    let segment = &path.segments.last().unwrap();
                     let ident = segment.ident.clone();
                     match &segment.arguments {
                         syn::PathArguments::None => return Ok(Type::Ident(ident)),
@@ -54,6 +55,9 @@ impl Type {
                                 }
                                 if ident == "VecList" {
                                     return Ok(Type::VecList(Box::new(ty)));
+                                }
+                                if ident == "RustResult" {
+                                    return Ok(Type::RustResult(Box::new(ty)));
                                 }
                                 if ident == "Fn0" {
                                     return Ok(Type::Fn0(Box::new(ty)));
@@ -119,6 +123,9 @@ impl Type {
             Self::VecList(ty) => {
                 format!("{} list", ty.to_ocaml_string())
             }
+            Self::RustResult(ty) => {
+                format!("({}, string) Result.t", ty.to_ocaml_string())
+            }
             Self::Result(ty_ok, ty_err) => {
                 format!("({}, {}) Result.t", ty_ok.to_ocaml_string(), ty_err.to_ocaml_string())
             }
@@ -144,7 +151,7 @@ impl Lang {
             Some(name) => match name.value().as_str() {
                 "OCaml" => Ok(Self::OCaml),
                 "Rust" => Ok(Self::Rust),
-                name => Err(Error::new(abi.span(), format!("unsupported abi name {name}"))),
+                name => Err(Error::new(abi.span(), format!("unsupported abi name {}", name))),
             },
         }
     }

@@ -56,11 +56,11 @@ impl FromSysValue for String {
 pub unsafe fn check_tag(kind: &str, v: ocaml_sys::Value, expected: u8) {
     if ocaml_sys::is_long(v) {
         let v = ocaml_sys::int_val(v);
-        panic!("expected a block, got a long {v}")
+        panic!("expected a block, got a long {}", v)
     }
     let tag = ocaml_sys::tag_val(v);
     if tag != expected {
-        panic!("unexpected tag for {kind}, {tag} <> {expected}")
+        panic!("unexpected tag for {}, {} <> {}", kind, tag, expected)
     }
 }
 
@@ -68,7 +68,7 @@ unsafe fn check_tuple(v: ocaml_sys::Value, expected_len: usize) {
     check_tag("tuple", v, 0);
     let len = ocaml_sys::wosize_val(v);
     if len != expected_len {
-        panic!("unexpected length for tuple, {len} <> {expected_len}")
+        panic!("unexpected length for tuple, {} <> {}", len, expected_len)
     }
 }
 
@@ -146,7 +146,7 @@ impl FromSysValue for Vec<f64> {
             }
             vs
         } else {
-            panic!("unexpected tag for double array, {tag}")
+            panic!("unexpected tag for double array, {}", tag)
         }
     }
 }
@@ -213,7 +213,7 @@ where
                 let t = ocaml_sys::field(v, 0);
                 Err(E::from_value(*t))
             }
-            tag => panic!("unexpected tag for Result {tag}"),
+            tag => panic!("unexpected tag for Result {}", tag),
         }
     }
 }

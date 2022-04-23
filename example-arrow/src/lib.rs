@@ -8,10 +8,9 @@ struct ParquetReader {
     arrow_reader: ParquetFileArrowReader,
 }
 
-fn reader(path: String) -> Result<Reader, String> {
-    // TODO: Improve the error handling to avoid the [to_string] bit.
-    let file = File::open(&path).map_err(|x| x.to_string())?;
-    let file_reader = SerializedFileReader::new(file).map_err(|x| x.to_string())?;
+fn reader(path: String) -> ocaml_rust::RustResult<Reader> {
+    let file = File::open(&path)?;
+    let file_reader = SerializedFileReader::new(file)?;
     let file_reader = std::sync::Arc::new(file_reader);
     let arrow_reader = ParquetFileArrowReader::new(file_reader.clone());
     let reader = ParquetReader { file_reader, arrow_reader };
@@ -44,9 +43,9 @@ fn parquet_metadata(reader: &Reader) -> Metadata {
     }
 }
 
-fn schema(reader: &Reader) -> Result<Schema, String> {
+fn schema(reader: &Reader) -> ocaml_rust::RustResult<Schema> {
     let mut reader = reader.inner().lock().unwrap();
-    let schema = reader.arrow_reader.get_schema().map_err(|x| x.to_string())?;
+    let schema = reader.arrow_reader.get_schema()?;
     let fields: Vec<_> = schema
         .fields()
         .iter()
@@ -103,9 +102,9 @@ mod arrow {
     }
 
     extern "Rust" {
-        fn reader(path: String) -> Result<Reader, String>;
+        fn reader(path: String) -> RustResult<Reader>;
         fn metadata_as_string(reader: &Reader) -> String;
         fn parquet_metadata(reader: &Reader) -> Metadata;
-        fn schema(reader: &Reader) -> Result<Schema, String>;
+        fn schema(reader: &Reader) -> RustResult<Schema>;
     }
 }

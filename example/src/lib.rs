@@ -21,7 +21,7 @@ fn str_format(x: (isize, isize), y: String) -> String {
 
 fn pair(xy: (String, f64, (isize, isize))) -> String {
     let (x, y, (a, b)) = xy;
-    format!("{x}:{y}:{a}:{b}")
+    format!("{}:{}:{}:{}", x, y, a, b)
 }
 fn vec_add(x: Vec<isize>, y: isize) -> Vec<isize> {
     x.iter().map(|x| x + y).collect()
@@ -163,5 +163,5 @@ fn create_foo2(v: isize) -> Custom<Foo> {
 
 fn foo2_to_string(v: &Custom<Foo>) -> String {
     let v = v.inner().lock().unwrap();
-    format!("v: {v:?}")
+    format!("v: {:?}", v)
 }
