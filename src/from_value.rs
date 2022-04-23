@@ -14,6 +14,12 @@ impl FromSysValue for isize {
     }
 }
 
+impl FromSysValue for bool {
+    unsafe fn from_value(v: ocaml_sys::Value) -> Self {
+        ocaml_sys::int_val(v) != 0
+    }
+}
+
 impl FromSysValue for f64 {
     unsafe fn from_value(v: ocaml_sys::Value) -> Self {
         check_tag("double", v, ocaml_sys::DOUBLE);
