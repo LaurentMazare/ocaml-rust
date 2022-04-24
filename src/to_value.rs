@@ -156,6 +156,31 @@ where
     }
 }
 
+// The Box<T> implementation below does not work as expected on recursive types.
+// It triggers the following issue at compile time:
+// error: reached the recursion limit while instantiating `<MyEnum as ToValue>::to_value::<...ple/src/lib.rs:67:1: 67:22], ()>`
+//   --> ocaml-rust/src/to_value.rs:169:9
+//     |
+// 169 |         T::to_value(s, pin)
+//     |         ^^^^^^^^^^^^^^^^^^^
+//     |
+// note: `<MyEnum as ToValue>::to_value` defined here
+//
+// This might be caused by the closure argument below so maybe removing it would help.
+impl<T> ToValue for Box<T>
+where
+    T: ToValue,
+{
+    fn to_value<F, U>(&self, pin: F) -> U
+    where
+        U: Sized,
+        F: FnOnce(ocaml_sys::Value) -> U,
+    {
+        let s = &*self;
+        T::to_value(s, pin)
+    }
+}
+
 impl<T, E> ToValue for Result<T, E>
 where
     T: ToValue,
