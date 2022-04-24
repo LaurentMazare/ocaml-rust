@@ -72,9 +72,8 @@ where
 {
     // This uses [mut self] as this can result in side effects on the ocaml side.
     pub fn call1<'a>(&mut self, arg: Arg) -> crate::exn::Result<'a, Res> {
-        let f = self.f.value().value;
         let arg = arg.to_value();
-        handle_exn(unsafe { ocaml_sys::caml_callback_exn(f, arg) })
+        handle_exn(unsafe { ocaml_sys::caml_callback_exn(self.f.value().value, arg) })
     }
 }
 
@@ -153,10 +152,16 @@ where
 {
     // This uses [mut self] as this can result in side effects on the ocaml side.
     pub fn call3<'a>(&mut self, arg1: Arg1, arg2: Arg2, arg3: Arg3) -> crate::exn::Result<'a, Res> {
-        let f = self.f.value().value;
-        let arg1 = arg1.to_value();
-        let arg2 = arg2.to_value();
-        let arg3 = arg3.to_value();
-        handle_exn(unsafe { ocaml_sys::caml_callback3_exn(f, arg1, arg2, arg3) })
+        let arg1: RootedValue<()> = crate::RootedValue::create(arg1.to_value());
+        let arg2: RootedValue<()> = crate::RootedValue::create(arg2.to_value());
+        let arg3: RootedValue<()> = crate::RootedValue::create(arg3.to_value());
+        handle_exn(unsafe {
+            ocaml_sys::caml_callback3_exn(
+                self.f.value().value,
+                arg1.value().value,
+                arg2.value().value,
+                arg3.value().value,
+            )
+        })
     }
 }
