@@ -14,7 +14,6 @@ pub use error::{RustError, RustResult};
 pub use exn::OCamlExn;
 pub use ocaml_rust_macro::bridge;
 pub use rooted::RootedValue;
-pub use to_value::to_rooted_value;
 pub use value::Value;
 
 static PANIC_HOOK_SETUP: std::sync::Once = std::sync::Once::new();

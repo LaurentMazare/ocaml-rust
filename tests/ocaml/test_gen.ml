@@ -108,3 +108,11 @@ module Ffi6 = struct
   ;;
 
 end
+module Ffi7 = struct
+  type compact;;
+  external generate
+    : int -> ((((Int64.t * Int64.t) * compact) * Int64.t) * Int64.t)
+    = "__ocaml_ffi7_generate"
+  ;;
+
+end
