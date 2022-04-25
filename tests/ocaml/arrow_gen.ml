@@ -43,7 +43,7 @@ open! Sexplib.Conv
   | LargeList
   | Struct
   | Union
-  | Dictionary
+  | Dictionary of data_type * data_type
   | Decimal of int * int
   | Map
   [@@boxed][@@deriving sexp];;

@@ -115,7 +115,11 @@ impl DataType {
             DT::LargeList(_) => Self::LargeList,
             DT::Struct(_) => Self::Struct,
             DT::Union(_, _) => Self::Union,
-            DT::Dictionary(_, _) => Self::Dictionary,
+            DT::Dictionary(d1, d2) => {
+                let d1 = Box::new(Self::of_arrow(d1));
+                let d2 = Box::new(Self::of_arrow(d2));
+                Self::Dictionary(d1, d2)
+            }
             DT::Decimal(s1, s2) => Self::Decimal(*s1, *s2),
             DT::Map(_, _) => Self::Map,
         }
@@ -181,7 +185,7 @@ mod arrow {
         LargeList,
         Struct,
         Union,
-        Dictionary, // TODO: Support recursive types.
+        Dictionary(Box<DataType>, Box<DataType>),
         Decimal(usize, usize),
         Map,
     }
