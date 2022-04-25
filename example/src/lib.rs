@@ -75,7 +75,7 @@ mod ffi3 {
         OneArg(isize),
         TwoArgs(isize, String),
         StructArgs { x: isize, y: String },
-        // Rec(Box<MyEnum>),
+        Rec(Box<MyEnum>),
     }
 
     #[ocaml_deriving(sexp)]
@@ -115,7 +115,7 @@ fn myenum_add_x(m: &MyEnum, v: isize) -> MyEnum {
         MyEnum::OneArg(x) => MyEnum::OneArg(x + v),
         MyEnum::TwoArgs(x, s) => MyEnum::TwoArgs(x + v, s.to_string()),
         MyEnum::StructArgs { x, y } => MyEnum::StructArgs { x: x + v, y: y.to_string() },
-        // MyEnum::Rec(r) => MyEnum::Rec(Box::new(myenum_add_x(r, v))),
+        MyEnum::Rec(r) => MyEnum::Rec(Box::new(myenum_add_x(r, v))),
     }
 }
 

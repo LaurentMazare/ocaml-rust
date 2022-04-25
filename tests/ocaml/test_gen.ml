@@ -55,6 +55,7 @@ open! Sexplib.Conv
   | OneArg of int
   | TwoArgs of int * string
   | StructArgs of { x: int; y: string }
+  | Rec of my_enum
   [@@boxed];;
   type my_struct = {
     x: int;

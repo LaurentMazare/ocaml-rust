@@ -65,13 +65,19 @@ let%expect_test _ =
   myenum (OneArg 42);
   myenum (StructArgs { x = 1337; y = "FooBar" });
   myenum (TwoArgs (1337, "FooBar"));
+  myenum (Rec NoArg);
+  myenum (Rec (Rec NoArg));
+  myenum (Rec (Rec (Rec (StructArgs { x = 1337; y = "FooBar" }))));
   [%expect
     {|
     ==== Test Enum ====
     <NoArg> <NoArg>
     <OneArg(42)> <OneArg(84)>
     <StructArgs { x: 1337, y: "FooBar" }> <StructArgs { x: 1379, y: "FooBar" }>
-    <TwoArgs(1337, "FooBar")> <TwoArgs(1379, "FooBar")> |}]
+    <TwoArgs(1337, "FooBar")> <TwoArgs(1379, "FooBar")>
+    <Rec(NoArg)> <Rec(NoArg)>
+    <Rec(Rec(NoArg))> <Rec(Rec(NoArg))>
+    <Rec(Rec(Rec(StructArgs { x: 1337, y: "FooBar" })))> <Rec(Rec(Rec(StructArgs { x: 1379, y: "FooBar" })))> |}]
 
 let%expect_test _ =
   Stdio.printf "\n==== Test Closures ====\n";
