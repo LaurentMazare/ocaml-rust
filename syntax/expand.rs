@@ -78,6 +78,7 @@ fn expand_enum(item: &syn::ItemEnum, expanded: &mut proc_macro2::TokenStream) ->
             }
         }
         expanded.extend(quote! {
+            impl ocaml_rust::from_value::NotF64 for #enum_ident {}
             impl ocaml_rust::from_value::FromSysValue for #enum_ident {
                 unsafe fn from_value(v: ocaml_sys::Value) -> Self {
                     if ocaml_sys::is_long(v) {
@@ -232,6 +233,7 @@ fn expand_struct(
         }
 
         expanded.extend(quote! {
+            impl ocaml_rust::from_value::NotF64 for #struct_ident {}
             impl ocaml_rust::to_value::ToValue for #struct_ident {
                 fn to_value(&self) -> ocaml_sys::Value
                 {

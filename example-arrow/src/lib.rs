@@ -126,10 +126,6 @@ impl DataType {
     }
 }
 
-// TODO: These should be derived automatically when needed.
-impl ocaml_rust::from_value::NotF64 for RowGroupMetadata {}
-impl ocaml_rust::from_value::NotF64 for SchemaField {}
-
 #[ocaml_rust::bridge]
 mod arrow {
     ocaml_include!("open! Sexplib.Conv");
