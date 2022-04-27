@@ -24,10 +24,12 @@ let () =
     match Arrow.record_reader_next record_reader with
     | None -> Stdio.printf "done\n%!"
     | Some batch ->
+      let batch = ok_exn batch in
       Stdio.printf
         "  batch %d %d\n%!"
         (Arrow.record_batch_num_rows batch)
         (Arrow.record_batch_num_columns batch);
       loop ()
   in
+  Stdio.printf "reading batches\n%!";
   loop ()

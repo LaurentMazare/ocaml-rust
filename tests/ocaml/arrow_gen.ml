@@ -100,7 +100,7 @@ open! Sexplib.Conv
   ;;
 
   external record_reader_next
-    : record_reader -> record_batch option
+    : record_reader -> (record_batch, string) Result.t option
     = "__ocaml_arrow_record_reader_next"
   ;;
 
