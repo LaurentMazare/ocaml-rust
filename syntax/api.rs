@@ -1,4 +1,4 @@
-use quote::ToTokens;
+use quote::{quote, ToTokens};
 use syn::parse::{Error, Parse, ParseStream, Result};
 use syn::spanned::Spanned;
 use syn::{braced, token, Abi, Attribute, Ident, Token};
@@ -163,7 +163,11 @@ impl Lang {
 }
 
 pub enum ModItem {
-    Fn { ident: proc_macro2::Ident, args: Vec<(syn::PatIdent, Box<syn::Type>, Type)>, output: Type },
+    Fn {
+        ident: proc_macro2::Ident,
+        args: Vec<(syn::PatIdent, Box<syn::Type>, Type)>,
+        output: (Box<syn::Type>, Type),
+    },
 }
 
 pub enum ApiItem {
@@ -246,9 +250,14 @@ impl Parse for ApiItem {
                                     }
                                 }
                             }
-                            let output = match f.sig.output {
-                                syn::ReturnType::Default => Type::Unit,
-                                syn::ReturnType::Type(_arrow, type_) => Type::parse_type(&type_)?,
+                            let output = match &f.sig.output {
+                                syn::ReturnType::Default => {
+                                    (Box::new(syn::Type::Verbatim(quote! { () })), Type::Unit)
+                                }
+                                syn::ReturnType::Type(_arrow, type_) => {
+                                    let ty = Type::parse_type(type_)?;
+                                    (type_.clone(), ty)
+                                }
                             };
                             mod_items.push(ModItem::Fn { ident: f.sig.ident, args, output })
                         }

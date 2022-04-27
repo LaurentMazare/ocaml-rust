@@ -272,9 +272,6 @@ mod arrow {
         ) -> RustResult<RecordReader>;
 
         fn record_reader_next(record_reader: &RecordReader) -> Option<RustResult<RecordBatch>>;
-        // TODO: COMPILING WITH THE FOLLOWING SIGNATURE INSTEAD WORKS WELL
-        // AND RESULTS IN A SEGFAULT!
-        // fn record_reader_next(record_reader: &RecordReader) -> Option<RecordBatch>;
 
         fn record_batch_schema(record_batch: &RecordBatch) -> Schema;
         fn record_batch_num_rows(record_batch: &RecordBatch) -> usize;

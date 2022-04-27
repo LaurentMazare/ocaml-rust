@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity)]
 use ocaml_rust::closure::{Fn0, Fn1};
 
 fn option_result(v: Option<isize>, e: String) -> Result<isize, String> {
@@ -186,7 +187,6 @@ mod ffi7 {
     }
 }
 
-#[allow(clippy::type_complexity)]
 fn generate(i0: isize) -> ((((i64, i64), Compact), i64), i64) {
     let mut i = i0 as i64;
     let d = i % 1000;

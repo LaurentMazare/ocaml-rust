@@ -171,7 +171,7 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                                 } else {
                                     "unit".to_string()
                                 };
-                                let output = output.to_ocaml_string();
+                                let output = output.1.to_ocaml_string();
                                 writeln!(w, "  external {}", ident)?;
                                 writeln!(w, "    : {} -> {}", args, output)?;
                                 writeln!(w, "    = \"{}\"\n  ;;\n", api.c_fn_name(ident))?;
