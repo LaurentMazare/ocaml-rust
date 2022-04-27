@@ -1,6 +1,8 @@
 module Arrow = struct
 open! Sexplib.Conv
-  type reader;;
+  type file_reader;;
+  type record_reader;;
+  type record_batch;;
   type interval_unit =
   | YearMonth
   | DayTime
@@ -67,24 +69,54 @@ open! Sexplib.Conv
     fields: schema_field array;
     metadata: (string * string) array;
   } [@@boxed][@@deriving sexp];;
-  external reader
-    : string -> (reader, string) Result.t
-    = "__ocaml_arrow_reader"
+  external file_reader
+    : string -> (file_reader, string) Result.t
+    = "__ocaml_arrow_file_reader"
   ;;
 
   external metadata_as_string
-    : reader -> string
+    : file_reader -> string
     = "__ocaml_arrow_metadata_as_string"
   ;;
 
   external parquet_metadata
-    : reader -> metadata
+    : file_reader -> metadata
     = "__ocaml_arrow_parquet_metadata"
   ;;
 
   external schema
-    : reader -> (schema, string) Result.t
+    : file_reader -> (schema, string) Result.t
     = "__ocaml_arrow_schema"
+  ;;
+
+  external get_record_reader
+    : file_reader -> int -> (record_reader, string) Result.t
+    = "__ocaml_arrow_get_record_reader"
+  ;;
+
+  external get_record_reader_by_columns
+    : file_reader -> int array -> int -> (record_reader, string) Result.t
+    = "__ocaml_arrow_get_record_reader_by_columns"
+  ;;
+
+  external record_reader_next
+    : record_reader -> record_batch option
+    = "__ocaml_arrow_record_reader_next"
+  ;;
+
+  external record_batch_schema
+    : record_batch -> schema
+    = "__ocaml_arrow_record_batch_schema"
+  ;;
+
+  external record_batch_num_rows
+    : record_batch -> int
+    = "__ocaml_arrow_record_batch_num_rows"
+  ;;
+
+  external record_batch_num_columns
+    : record_batch -> int
+    = "__ocaml_arrow_record_batch_num_columns"
   ;;
 
 end

@@ -171,8 +171,10 @@ impl FromSysValue for Vec<f64> {
 pub trait NotF64 {}
 
 impl NotF64 for i64 {}
+impl NotF64 for i32 {}
 impl NotF64 for String {}
 impl NotF64 for isize {}
+impl NotF64 for usize {}
 impl NotF64 for () {}
 impl<T> NotF64 for Vec<T> {}
 impl<T> NotF64 for Option<T> {}

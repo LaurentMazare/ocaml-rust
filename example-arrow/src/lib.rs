@@ -1,23 +1,44 @@
 use arrow::datatypes::DataType as DT;
-use ocaml_rust::Custom;
+use arrow::record_batch::RecordBatch as ArrowRecordBatch;
+use ocaml_rust::{Custom, RustResult};
+use parquet::arrow::arrow_reader::ParquetRecordBatchReader;
 use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
 use parquet::file::reader::SerializedFileReader;
 use std::fs::File;
 
-fn reader(path: String) -> ocaml_rust::RustResult<Reader> {
+impl Schema {
+    fn of_arrow(schema: &arrow::datatypes::Schema) -> Schema {
+        let fields: Vec<_> = schema
+            .fields()
+            .iter()
+            .map(|field| SchemaField {
+                name: field.name().to_string(),
+                data_type: DataType::of_arrow(field.data_type()),
+                nullable: field.is_nullable(),
+            })
+            .collect();
+        let metadata: Vec<(String, String)> =
+            schema.metadata().iter().map(|(x, y)| (x.to_string(), y.to_string())).collect();
+        Schema { fields, metadata }
+    }
+}
+
+// TODO: Add an explicit close function rather than rely on the GC
+// collecting the file to trigger the close.
+fn file_reader(path: String) -> RustResult<FileReader> {
     let file = File::open(&path)?;
     let file_reader = SerializedFileReader::new(file)?;
     let file_reader = std::sync::Arc::new(file_reader);
-    let reader = ParquetFileArrowReader::new(file_reader);
-    Ok(Custom::new(reader))
+    let file_reader = ParquetFileArrowReader::new(file_reader);
+    Ok(Custom::new(file_reader))
 }
 
-fn metadata_as_string(reader: &Reader) -> String {
+fn metadata_as_string(reader: &FileReader) -> String {
     let mut reader = reader.inner().lock().unwrap();
     format!("{:?}", reader.get_metadata())
 }
 
-fn parquet_metadata(reader: &Reader) -> Metadata {
+fn parquet_metadata(reader: &FileReader) -> Metadata {
     let mut reader = reader.inner().lock().unwrap();
     let metadata = reader.get_metadata();
     let f = metadata.file_metadata();
@@ -38,21 +59,44 @@ fn parquet_metadata(reader: &Reader) -> Metadata {
     }
 }
 
-fn schema(reader: &Reader) -> ocaml_rust::RustResult<Schema> {
+fn schema(reader: &FileReader) -> RustResult<Schema> {
     let mut reader = reader.inner().lock().unwrap();
     let schema = reader.get_schema()?;
-    let fields: Vec<_> = schema
-        .fields()
-        .iter()
-        .map(|field| SchemaField {
-            name: field.name().to_string(),
-            data_type: DataType::of_arrow(field.data_type()),
-            nullable: field.is_nullable(),
-        })
-        .collect();
-    let metadata: Vec<(String, String)> =
-        schema.metadata().iter().map(|(x, y)| (x.to_string(), y.to_string())).collect();
-    Ok(Schema { fields, metadata })
+    Ok(Schema::of_arrow(&schema))
+}
+
+fn get_record_reader(reader: &FileReader, batch_size: usize) -> RustResult<RecordReader> {
+    let mut reader = reader.inner().lock().unwrap();
+    Ok(Custom::new(reader.get_record_reader(batch_size)?))
+}
+
+fn get_record_reader_by_columns(
+    reader: &FileReader,
+    columns: Vec<usize>,
+    batch_size: usize,
+) -> RustResult<RecordReader> {
+    let mut reader = reader.inner().lock().unwrap();
+    Ok(Custom::new(reader.get_record_reader_by_columns(columns.into_iter(), batch_size)?))
+}
+
+fn record_reader_next(record_reader: &RecordReader) -> Option<RustResult<RecordBatch>> {
+    let mut record_reader = record_reader.inner().lock().unwrap();
+    record_reader.next().map(|x| x.map_err(|err| err.into()).map(Custom::new))
+}
+
+fn record_batch_schema(record_batch: &RecordBatch) -> Schema {
+    let record_batch = record_batch.inner().lock().unwrap();
+    Schema::of_arrow(record_batch.schema().as_ref())
+}
+
+fn record_batch_num_rows(record_batch: &RecordBatch) -> usize {
+    let record_batch = record_batch.inner().lock().unwrap();
+    record_batch.num_rows()
+}
+
+fn record_batch_num_columns(record_batch: &RecordBatch) -> usize {
+    let record_batch = record_batch.inner().lock().unwrap();
+    record_batch.num_columns()
 }
 
 impl IntervalUnit {
@@ -123,7 +167,9 @@ impl DataType {
 #[ocaml_rust::bridge]
 mod arrow {
     ocaml_include!("open! Sexplib.Conv");
-    type Reader = Custom<ParquetFileArrowReader>;
+    type FileReader = Custom<ParquetFileArrowReader>;
+    type RecordReader = Custom<ParquetRecordBatchReader>;
+    type RecordBatch = Custom<ArrowRecordBatch>;
 
     #[ocaml_deriving(sexp)]
     #[derive(Debug, Clone)]
@@ -213,9 +259,22 @@ mod arrow {
     }
 
     extern "Rust" {
-        fn reader(path: String) -> RustResult<Reader>;
-        fn metadata_as_string(reader: &Reader) -> String;
-        fn parquet_metadata(reader: &Reader) -> Metadata;
-        fn schema(reader: &Reader) -> RustResult<Schema>;
+        // TODO: provide better scoping/module.
+        fn file_reader(path: String) -> RustResult<FileReader>;
+        fn metadata_as_string(reader: &FileReader) -> String;
+        fn parquet_metadata(reader: &FileReader) -> Metadata;
+        fn schema(reader: &FileReader) -> RustResult<Schema>;
+        fn get_record_reader(reader: &FileReader, batch_size: usize) -> RustResult<RecordReader>;
+        fn get_record_reader_by_columns(
+            reader: &FileReader,
+            columns: Vec<usize>,
+            batch_size: usize,
+        ) -> RustResult<RecordReader>;
+
+        fn record_reader_next(record_reader: &RecordReader) -> Option<RecordBatch>;
+
+        fn record_batch_schema(record_batch: &RecordBatch) -> Schema;
+        fn record_batch_num_rows(record_batch: &RecordBatch) -> usize;
+        fn record_batch_num_columns(record_batch: &RecordBatch) -> usize;
     }
 }
