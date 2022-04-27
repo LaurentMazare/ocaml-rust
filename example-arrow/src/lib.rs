@@ -1,31 +1,25 @@
 use arrow::datatypes::DataType as DT;
 use ocaml_rust::Custom;
 use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
-use parquet::file::reader::{FileReader, SerializedFileReader};
+use parquet::file::reader::SerializedFileReader;
 use std::fs::File;
-
-struct ParquetReader {
-    file_reader: std::sync::Arc<SerializedFileReader<File>>,
-    arrow_reader: ParquetFileArrowReader,
-}
 
 fn reader(path: String) -> ocaml_rust::RustResult<Reader> {
     let file = File::open(&path)?;
     let file_reader = SerializedFileReader::new(file)?;
     let file_reader = std::sync::Arc::new(file_reader);
-    let arrow_reader = ParquetFileArrowReader::new(file_reader.clone());
-    let reader = ParquetReader { file_reader, arrow_reader };
+    let reader = ParquetFileArrowReader::new(file_reader);
     Ok(Custom::new(reader))
 }
 
 fn metadata_as_string(reader: &Reader) -> String {
-    let reader = reader.inner().lock().unwrap();
-    format!("{:?}", reader.file_reader.metadata())
+    let mut reader = reader.inner().lock().unwrap();
+    format!("{:?}", reader.get_metadata())
 }
 
 fn parquet_metadata(reader: &Reader) -> Metadata {
-    let reader = reader.inner().lock().unwrap();
-    let metadata = reader.file_reader.metadata();
+    let mut reader = reader.inner().lock().unwrap();
+    let metadata = reader.get_metadata();
     let f = metadata.file_metadata();
     let row_groups: Vec<_> = metadata
         .row_groups()
@@ -46,7 +40,7 @@ fn parquet_metadata(reader: &Reader) -> Metadata {
 
 fn schema(reader: &Reader) -> ocaml_rust::RustResult<Schema> {
     let mut reader = reader.inner().lock().unwrap();
-    let schema = reader.arrow_reader.get_schema()?;
+    let schema = reader.get_schema()?;
     let fields: Vec<_> = schema
         .fields()
         .iter()
@@ -129,7 +123,7 @@ impl DataType {
 #[ocaml_rust::bridge]
 mod arrow {
     ocaml_include!("open! Sexplib.Conv");
-    type Reader = Custom<ParquetReader>;
+    type Reader = Custom<ParquetFileArrowReader>;
 
     #[ocaml_deriving(sexp)]
     #[derive(Debug, Clone)]
