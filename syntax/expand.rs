@@ -273,7 +273,7 @@ impl Api {
                 ApiItem::ForeignMod { attrs: _, lang: _, brace_token: _, items } => {
                     for item in items.iter() {
                         match item {
-                            ModItem::Fn { ident, args, output: (output, _)} => {
+                            ModItem::Fn { ident, args, output: (output, _) } => {
                                 let ocaml_ident =
                                     syn::Ident::new(&self.c_fn_name(ident), ident.span());
                                 let arg_with_types: Vec<_> = args
@@ -300,12 +300,6 @@ impl Api {
                                         }
                                     })
                                     .collect();
-                                let post_process_res = 
-                                    // TODO: Is it really necessary to go through a rooted value here?
-                                    quote! {
-                                        let rooted_res = ocaml_rust::to_value::to_rooted_value(&res);
-                                        rooted_res.value().value
-                                };
                                 expanded.extend(quote! {
                                 #[no_mangle]
                                 pub extern "C" fn #ocaml_ident(#(#arg_with_types),*) -> ocaml_sys::Value {
@@ -313,7 +307,7 @@ impl Api {
                                     #(#args_conv)*;
                                     #[allow(clippy::unnecessary_mut_passed)]
                                     let res: #output = #ident(#(#args),*);
-                                    #post_process_res
+                                    <#output as ocaml_rust::to_value::ToValue>::to_value(&res)
                                 } })
                             }
                         }

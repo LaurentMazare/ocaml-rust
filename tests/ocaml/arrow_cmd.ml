@@ -19,7 +19,7 @@ let () =
   Stdio.printf "%s\n%!" (Arrow.sexp_of_metadata metadata |> Sexp.to_string_hum);
   let schema = Arrow.schema file_reader |> ok_exn in
   Stdio.printf "%s\n%!" (Arrow.sexp_of_schema schema |> Sexp.to_string_hum);
-  let record_reader = Arrow.get_record_reader file_reader (1024 * 1024) |> ok_exn in
+  let record_reader = Arrow.get_record_reader file_reader (64 * 1024) |> ok_exn in
   let rec loop () =
     match Arrow.record_reader_next record_reader with
     | None -> Stdio.printf "done\n%!"
