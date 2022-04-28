@@ -33,6 +33,12 @@ impl ToValue for i64 {
     }
 }
 
+impl ToValue for f32 {
+    fn to_value(&self) -> ocaml_sys::Value {
+        unsafe { ocaml_sys::caml_copy_double(*self as f64) }
+    }
+}
+
 impl ToValue for f64 {
     fn to_value(&self) -> ocaml_sys::Value {
         unsafe { ocaml_sys::caml_copy_double(*self) }

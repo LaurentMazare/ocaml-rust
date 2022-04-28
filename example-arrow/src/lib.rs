@@ -1,3 +1,4 @@
+use arrow::array::ArrayRef as ArrowArrayRef;
 use arrow::datatypes::DataType as DT;
 use arrow::record_batch::RecordBatch as ArrowRecordBatch;
 use ocaml_rust::{Custom, RustResult};
@@ -99,6 +100,53 @@ fn record_batch_num_columns(record_batch: &RecordBatch) -> usize {
     record_batch.num_columns()
 }
 
+fn record_batch_column(record_batch: &RecordBatch, index: usize) -> ArrayRef {
+    let record_batch = record_batch.inner().lock().unwrap();
+    Custom::new(record_batch.column(index).clone())
+}
+
+fn array_data_type(array: &ArrayRef) -> DataType {
+    let array = array.inner().lock().unwrap();
+    DataType::of_arrow(&array.data_type())
+}
+
+fn array_len(array: &ArrayRef) -> usize {
+    let array = array.inner().lock().unwrap();
+    array.len()
+}
+
+fn array_null_count(array: &ArrayRef) -> usize {
+    let array = array.inner().lock().unwrap();
+    array.null_count()
+}
+
+// TODO: Make it possible to use OCaml bigarrays.
+fn array_f32_values(array: &ArrayRef) -> Option<Vec<f32>> {
+    let array = array.inner().lock().unwrap();
+    array.as_any().downcast_ref::<arrow::array::Float32Array>().map(|x| x.values().to_vec())
+}
+
+fn array_f64_values(array: &ArrayRef) -> Option<Vec<f64>> {
+    let array = array.inner().lock().unwrap();
+    array.as_any().downcast_ref::<arrow::array::Float64Array>().map(|x| x.values().to_vec())
+}
+
+fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>> {
+    let array = array.inner().lock().unwrap();
+    array
+        .as_any()
+        .downcast_ref::<arrow::array::StringArray>()
+        .map(|array| array.iter().map(|s| s.map(|s| s.to_string())).collect())
+}
+
+fn array_large_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>> {
+    let array = array.inner().lock().unwrap();
+    array
+        .as_any()
+        .downcast_ref::<arrow::array::LargeStringArray>()
+        .map(|array| array.iter().map(|s| s.map(|s| s.to_string())).collect())
+}
+
 impl IntervalUnit {
     fn of_arrow(unit: &arrow::datatypes::IntervalUnit) -> Self {
         match unit {
@@ -170,6 +218,7 @@ mod arrow {
     type FileReader = Custom<ParquetFileArrowReader>;
     type RecordReader = Custom<ParquetRecordBatchReader>;
     type RecordBatch = Custom<ArrowRecordBatch>;
+    type ArrayRef = Custom<ArrowArrayRef>;
 
     #[ocaml_deriving(sexp)]
     #[derive(Debug, Clone)]
@@ -276,5 +325,15 @@ mod arrow {
         fn record_batch_schema(record_batch: &RecordBatch) -> Schema;
         fn record_batch_num_rows(record_batch: &RecordBatch) -> usize;
         fn record_batch_num_columns(record_batch: &RecordBatch) -> usize;
+        fn record_batch_column(record_batch: &RecordBatch, index: usize) -> ArrayRef;
+
+        fn array_data_type(array: &ArrayRef) -> DataType;
+        fn array_len(array: &ArrayRef) -> usize;
+        fn array_null_count(array: &ArrayRef) -> usize;
+
+        fn array_f32_values(array: &ArrayRef) -> Option<Vec<f32>>;
+        fn array_f64_values(array: &ArrayRef) -> Option<Vec<f64>>;
+        fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>>;
+        fn array_large_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>>;
     }
 }

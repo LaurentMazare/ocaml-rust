@@ -112,7 +112,7 @@ impl Type {
                 "usize" => "int".to_string(),
                 "i32" => "Int32.t".to_string(),
                 "i64" => "Int64.t".to_string(),
-                "f64" => "float".to_string(),
+                "f32" | "f64" => "float".to_string(),
                 ident => ocamlize(ident),
             },
             Self::Tuple(tuple) => {

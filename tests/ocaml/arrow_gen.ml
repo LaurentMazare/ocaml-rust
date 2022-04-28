@@ -3,6 +3,7 @@ open! Sexplib.Conv
   type file_reader;;
   type record_reader;;
   type record_batch;;
+  type array_ref;;
   type interval_unit =
   | YearMonth
   | DayTime
@@ -117,6 +118,46 @@ open! Sexplib.Conv
   external record_batch_num_columns
     : record_batch -> int
     = "__ocaml_arrow_record_batch_num_columns"
+  ;;
+
+  external record_batch_column
+    : record_batch -> int -> array_ref
+    = "__ocaml_arrow_record_batch_column"
+  ;;
+
+  external array_data_type
+    : array_ref -> data_type
+    = "__ocaml_arrow_array_data_type"
+  ;;
+
+  external array_len
+    : array_ref -> int
+    = "__ocaml_arrow_array_len"
+  ;;
+
+  external array_null_count
+    : array_ref -> int
+    = "__ocaml_arrow_array_null_count"
+  ;;
+
+  external array_f32_values
+    : array_ref -> float array option
+    = "__ocaml_arrow_array_f32_values"
+  ;;
+
+  external array_f64_values
+    : array_ref -> float array option
+    = "__ocaml_arrow_array_f64_values"
+  ;;
+
+  external array_string_values
+    : array_ref -> string option array option
+    = "__ocaml_arrow_array_string_values"
+  ;;
+
+  external array_large_string_values
+    : array_ref -> string option array option
+    = "__ocaml_arrow_array_large_string_values"
   ;;
 
 end
