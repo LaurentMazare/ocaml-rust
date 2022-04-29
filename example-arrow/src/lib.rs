@@ -107,7 +107,7 @@ fn record_batch_column(record_batch: &RecordBatch, index: usize) -> ArrayRef {
 
 fn array_data_type(array: &ArrayRef) -> DataType {
     let array = array.inner().lock().unwrap();
-    DataType::of_arrow(&array.data_type())
+    DataType::of_arrow(array.data_type())
 }
 
 fn array_len(array: &ArrayRef) -> usize {
