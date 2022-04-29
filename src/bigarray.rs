@@ -1,7 +1,7 @@
 use crate::to_value::ToValue;
 use ocaml_sys::bigarray::Kind;
 
-trait Elem {
+pub trait Elem {
     const KIND: Kind;
 }
 
