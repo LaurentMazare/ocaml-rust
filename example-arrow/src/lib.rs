@@ -3,7 +3,7 @@ use arrow::datatypes::DataType as DT;
 use arrow::record_batch::RecordBatch as ArrowRecordBatch;
 use ocaml_rust::{BigArray1, Custom, RustResult};
 use parquet::arrow::arrow_reader::ParquetRecordBatchReader;
-use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
+use parquet::arrow::{ArrowReader, ArrowWriter, ParquetFileArrowReader};
 use parquet::file::reader::SerializedFileReader;
 use std::fs::File;
 
@@ -103,6 +103,43 @@ fn record_batch_num_columns(record_batch: &RecordBatch) -> usize {
 fn record_batch_column(record_batch: &RecordBatch, index: usize) -> ArrayRef {
     let record_batch = record_batch.inner().lock().unwrap();
     Custom::new(record_batch.column(index).clone())
+}
+
+fn record_batch_write_parquet(record_batch: &RecordBatch, path: String) -> RustResult<()> {
+    let record_batch = record_batch.inner().lock().unwrap();
+    let file = File::create(&path)?;
+    let props = parquet::file::properties::WriterProperties::builder().build();
+
+    let mut writer = ArrowWriter::try_new(file, record_batch.schema(), Some(props))?;
+
+    writer.write(&record_batch)?;
+
+    // writer must be closed to write footer
+    writer.close()?;
+    Ok(())
+}
+
+fn writer_new(record_batch: &RecordBatch, path: String) -> RustResult<FileWriter> {
+    let record_batch = record_batch.inner().lock().unwrap();
+    let file = File::create(&path)?;
+    let props = parquet::file::properties::WriterProperties::builder().build();
+
+    let mut writer = ArrowWriter::try_new(file, record_batch.schema(), Some(props))?;
+    writer.write(&record_batch)?;
+    Ok(Custom::new(writer))
+}
+
+fn writer_write(w: &FileWriter, record_batch: &RecordBatch) -> RustResult<()> {
+    let mut w = w.inner().lock().unwrap();
+    let record_batch = record_batch.inner().lock().unwrap();
+    w.write(&record_batch)?;
+    Ok(())
+}
+
+fn writer_close(w: &FileWriter) -> RustResult<()> {
+    let mut w = w.inner().lock().unwrap();
+    let _metadata = w.close()?;
+    Ok(())
 }
 
 fn array_data_type(array: &ArrayRef) -> DataType {
@@ -233,6 +270,7 @@ impl DataType {
 mod arrow {
     ocaml_include!("open! Sexplib.Conv");
     type FileReader = Custom<ParquetFileArrowReader>;
+    type FileWriter = Custom<ArrowWriter<std::fs::File>>;
     type RecordReader = Custom<ParquetRecordBatchReader>;
     type RecordBatch = Custom<ArrowRecordBatch>;
     type ArrayRef = Custom<ArrowArrayRef>;
@@ -343,6 +381,11 @@ mod arrow {
         fn record_batch_num_rows(record_batch: &RecordBatch) -> usize;
         fn record_batch_num_columns(record_batch: &RecordBatch) -> usize;
         fn record_batch_column(record_batch: &RecordBatch, index: usize) -> ArrayRef;
+        fn record_batch_write_parquet(record_batch: &RecordBatch, path: String) -> RustResult<()>;
+
+        fn writer_new(record_batch: &RecordBatch, path: String) -> RustResult<FileWriter>;
+        fn writer_write(w: &FileWriter, record_batch: &RecordBatch) -> RustResult<()>;
+        fn writer_close(file_writer: &FileWriter) -> RustResult<()>;
 
         fn array_data_type(array: &ArrayRef) -> DataType;
         fn array_len(array: &ArrayRef) -> usize;

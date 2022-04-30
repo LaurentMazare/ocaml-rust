@@ -124,8 +124,12 @@ impl Type {
                 ident => ocamlize(ident),
             },
             Self::Tuple(tuple) => {
-                let v: Vec<_> = tuple.iter().map(|x| x.to_ocaml_string()).collect();
-                format!("({})", v.join(" * "))
+                if tuple.is_empty() {
+                    "unit".to_string()
+                } else {
+                    let v: Vec<_> = tuple.iter().map(|x| x.to_ocaml_string()).collect();
+                    format!("({})", v.join(" * "))
+                }
             }
             Self::Option(ty) => {
                 format!("{} option", ty.to_ocaml_string())
