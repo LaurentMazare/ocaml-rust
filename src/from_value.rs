@@ -26,6 +26,13 @@ impl FromSysValue for bool {
     }
 }
 
+impl FromSysValue for f32 {
+    unsafe fn from_value(v: ocaml_sys::Value) -> Self {
+        check_tag("double", v, ocaml_sys::DOUBLE);
+        *(v as *const f32)
+    }
+}
+
 impl FromSysValue for f64 {
     unsafe fn from_value(v: ocaml_sys::Value) -> Self {
         check_tag("double", v, ocaml_sys::DOUBLE);
@@ -137,6 +144,31 @@ where
         let t3: T3 = FromSysValue::from_value(*t3);
         let t4: T4 = FromSysValue::from_value(*t4);
         (t1, t2, t3, t4)
+    }
+}
+
+impl FromSysValue for Vec<f32> {
+    unsafe fn from_value(v: ocaml_sys::Value) -> Self {
+        let tag = ocaml_sys::tag_val(v);
+        if tag == 0 {
+            let len = ocaml_sys::wosize_val(v);
+            let mut vs = Vec::new();
+            for idx in 0..len {
+                let t = ocaml_sys::field(v, idx);
+                vs.push(FromSysValue::from_value(*t));
+            }
+            vs
+        } else if tag == ocaml_sys::DOUBLE_ARRAY {
+            let len = ocaml_sys::wosize_val(v);
+            let mut vs = Vec::new();
+            for idx in 0..len {
+                let t = ocaml_sys::field(v, idx);
+                vs.push(*(t as *const f32))
+            }
+            vs
+        } else {
+            panic!("unexpected tag for double array, {}", tag)
+        }
     }
 }
 

@@ -166,6 +166,56 @@ open! Sexplib.Conv
     = "__ocaml_arrow_array_null_count"
   ;;
 
+  external array_duration_ns_from
+    : Int64.t array -> array_ref
+    = "__ocaml_arrow_array_duration_ns_from"
+  ;;
+
+  external array_time_ns_from
+    : Int64.t array -> array_ref
+    = "__ocaml_arrow_array_time_ns_from"
+  ;;
+
+  external array_timestamp_ns_from
+    : Int64.t array -> array_ref
+    = "__ocaml_arrow_array_timestamp_ns_from"
+  ;;
+
+  external array_date32_from
+    : Int32.t array -> array_ref
+    = "__ocaml_arrow_array_date32_from"
+  ;;
+
+  external array_date64_from
+    : Int64.t array -> array_ref
+    = "__ocaml_arrow_array_date64_from"
+  ;;
+
+  external array_char_from
+    : char array -> array_ref
+    = "__ocaml_arrow_array_char_from"
+  ;;
+
+  external array_i32_from
+    : Int32.t array -> array_ref
+    = "__ocaml_arrow_array_i32_from"
+  ;;
+
+  external array_i64_from
+    : Int64.t array -> array_ref
+    = "__ocaml_arrow_array_i64_from"
+  ;;
+
+  external array_f32_from
+    : float array -> array_ref
+    = "__ocaml_arrow_array_f32_from"
+  ;;
+
+  external array_f64_from
+    : float array -> array_ref
+    = "__ocaml_arrow_array_f64_from"
+  ;;
+
   external array_duration_ns_values
     : array_ref -> Int64.t array option
     = "__ocaml_arrow_array_duration_ns_values"
