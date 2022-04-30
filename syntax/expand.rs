@@ -197,8 +197,6 @@ fn expand_struct(
         for (field_idx, field) in item.fields.iter().enumerate() {
             let field_ident = &field.ident;
             let ty = &field.ty;
-            // TODO: This won't work for custom blocks used by abstract types.  It would be nicer to
-            // handle custom blocks via a trait implementation rather than specific code in the macro
             fields.push(quote! { #field_ident });
             let_fields.push(quote! {
                 let _tmp_value = ocaml_sys::field(v, #field_idx);

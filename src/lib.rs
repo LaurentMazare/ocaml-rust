@@ -13,7 +13,7 @@ pub mod rooted;
 pub mod to_value;
 pub mod value;
 pub use bigarray::BigArray1;
-pub use custom::Custom;
+pub use custom::{Custom, CustomConst};
 pub use error::{RustError, RustResult};
 pub use exn::OCamlExn;
 pub use ocaml_rust_macro::bridge;

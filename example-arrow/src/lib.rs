@@ -1,7 +1,7 @@
 use arrow::array::ArrayRef as ArrowArrayRef;
 use arrow::datatypes::DataType as DT;
 use arrow::record_batch::RecordBatch as ArrowRecordBatch;
-use ocaml_rust::{BigArray1, Custom, RustResult};
+use ocaml_rust::{BigArray1, Custom, CustomConst, RustResult};
 use parquet::arrow::arrow_reader::ParquetRecordBatchReader;
 use parquet::arrow::{ArrowReader, ArrowWriter, ParquetFileArrowReader};
 use parquet::file::reader::SerializedFileReader;
@@ -82,37 +82,37 @@ fn get_record_reader_by_columns(
 
 fn record_reader_next(record_reader: &RecordReader) -> Option<RustResult<RecordBatch>> {
     let mut record_reader = record_reader.inner().lock().unwrap();
-    record_reader.next().map(|x| x.map_err(|err| err.into()).map(Custom::new))
+    record_reader.next().map(|x| x.map_err(|err| err.into()).map(CustomConst::new))
 }
 
 fn record_batch_schema(record_batch: &RecordBatch) -> Schema {
-    let record_batch = record_batch.inner().lock().unwrap();
+    let record_batch = record_batch.inner();
     Schema::of_arrow(record_batch.schema().as_ref())
 }
 
 fn record_batch_num_rows(record_batch: &RecordBatch) -> usize {
-    let record_batch = record_batch.inner().lock().unwrap();
+    let record_batch = record_batch.inner();
     record_batch.num_rows()
 }
 
 fn record_batch_num_columns(record_batch: &RecordBatch) -> usize {
-    let record_batch = record_batch.inner().lock().unwrap();
+    let record_batch = record_batch.inner();
     record_batch.num_columns()
 }
 
 fn record_batch_column(record_batch: &RecordBatch, index: usize) -> ArrayRef {
-    let record_batch = record_batch.inner().lock().unwrap();
-    Custom::new(record_batch.column(index).clone())
+    let record_batch = record_batch.inner();
+    CustomConst::new(record_batch.column(index).clone())
 }
 
 fn record_batch_write_parquet(record_batch: &RecordBatch, path: String) -> RustResult<()> {
-    let record_batch = record_batch.inner().lock().unwrap();
+    let record_batch = record_batch.inner();
     let file = File::create(&path)?;
     let props = parquet::file::properties::WriterProperties::builder().build();
 
     let mut writer = ArrowWriter::try_new(file, record_batch.schema(), Some(props))?;
 
-    writer.write(&record_batch)?;
+    writer.write(record_batch)?;
 
     // writer must be closed to write footer
     writer.close()?;
@@ -120,19 +120,19 @@ fn record_batch_write_parquet(record_batch: &RecordBatch, path: String) -> RustR
 }
 
 fn writer_new(record_batch: &RecordBatch, path: String) -> RustResult<FileWriter> {
-    let record_batch = record_batch.inner().lock().unwrap();
+    let record_batch = record_batch.inner();
     let file = File::create(&path)?;
     let props = parquet::file::properties::WriterProperties::builder().build();
 
     let mut writer = ArrowWriter::try_new(file, record_batch.schema(), Some(props))?;
-    writer.write(&record_batch)?;
+    writer.write(record_batch)?;
     Ok(Custom::new(writer))
 }
 
 fn writer_write(w: &FileWriter, record_batch: &RecordBatch) -> RustResult<()> {
     let mut w = w.inner().lock().unwrap();
-    let record_batch = record_batch.inner().lock().unwrap();
-    w.write(&record_batch)?;
+    let record_batch = record_batch.inner();
+    w.write(record_batch)?;
     Ok(())
 }
 
@@ -143,29 +143,29 @@ fn writer_close(w: &FileWriter) -> RustResult<()> {
 }
 
 fn array_data_type(array: &ArrayRef) -> DataType {
-    let array = array.inner().lock().unwrap();
+    let array = array.inner();
     DataType::of_arrow(array.data_type())
 }
 
 fn array_len(array: &ArrayRef) -> usize {
-    let array = array.inner().lock().unwrap();
+    let array = array.inner();
     array.len()
 }
 
 fn array_null_count(array: &ArrayRef) -> usize {
-    let array = array.inner().lock().unwrap();
+    let array = array.inner();
     array.null_count()
 }
 
 macro_rules! value_fns {
     ($value_fn: ident, $value_fn_ba: ident, $typ: ident, $array_typ: ident) => {
         fn $value_fn(array: &ArrayRef) -> Option<Vec<$typ>> {
-            let array = array.inner().lock().unwrap();
+            let array = array.inner();
             array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| x.values().to_vec())
         }
 
         fn $value_fn_ba(array: &ArrayRef) -> Option<BigArray1<$typ>> {
-            let array = array.inner().lock().unwrap();
+            let array = array.inner();
             array
                 .as_any()
                 .downcast_ref::<arrow::array::$array_typ>()
@@ -186,7 +186,7 @@ value_fns!(array_f32_values, array_f32_values_ba, f32, Float32Array);
 value_fns!(array_f64_values, array_f64_values_ba, f64, Float64Array);
 
 fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>> {
-    let array = array.inner().lock().unwrap();
+    let array = array.inner();
     array
         .as_any()
         .downcast_ref::<arrow::array::StringArray>()
@@ -194,7 +194,7 @@ fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>> {
 }
 
 fn array_large_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>> {
-    let array = array.inner().lock().unwrap();
+    let array = array.inner();
     array
         .as_any()
         .downcast_ref::<arrow::array::LargeStringArray>()
@@ -272,8 +272,8 @@ mod arrow {
     type FileReader = Custom<ParquetFileArrowReader>;
     type FileWriter = Custom<ArrowWriter<std::fs::File>>;
     type RecordReader = Custom<ParquetRecordBatchReader>;
-    type RecordBatch = Custom<ArrowRecordBatch>;
-    type ArrayRef = Custom<ArrowArrayRef>;
+    type RecordBatch = CustomConst<ArrowRecordBatch>;
+    type ArrayRef = CustomConst<ArrowArrayRef>;
 
     #[ocaml_deriving(sexp)]
     #[derive(Debug, Clone)]
