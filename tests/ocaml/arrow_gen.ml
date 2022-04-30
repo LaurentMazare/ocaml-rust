@@ -150,6 +150,16 @@ open! Sexplib.Conv
     = "__ocaml_arrow_array_f64_values"
   ;;
 
+  external array_f32_values_ba
+    : array_ref -> (float, Bigarray.float32_elt, string) Bigarray.Array1.t option
+    = "__ocaml_arrow_array_f32_values_ba"
+  ;;
+
+  external array_f64_values_ba
+    : array_ref -> (float, Bigarray.float64_elt, string) Bigarray.Array1.t option
+    = "__ocaml_arrow_array_f64_values_ba"
+  ;;
+
   external array_string_values
     : array_ref -> string option array option
     = "__ocaml_arrow_array_string_values"

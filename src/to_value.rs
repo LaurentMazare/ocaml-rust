@@ -188,3 +188,9 @@ impl ToValue for String {
         rv.value().value
     }
 }
+
+impl<T> ToValue for RootedValue<T> {
+    fn to_value(&self) -> ocaml_sys::Value {
+        self.value().value
+    }
+}

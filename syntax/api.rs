@@ -19,6 +19,7 @@ pub fn ocamlize(s: &str) -> String {
     res.into_iter().collect()
 }
 
+#[derive(Debug)]
 pub enum Type {
     Unit,
     Ident(proc_macro2::Ident),
@@ -26,6 +27,7 @@ pub enum Type {
     VecArray(Box<Type>),
     VecList(Box<Type>),
     RustResult(Box<Type>),
+    BigArray1(Box<Type>),
     Option(Box<Type>),
     Result(Box<Type>, Box<Type>),
     Fn0(Box<Type>),
@@ -33,6 +35,8 @@ pub enum Type {
 }
 
 impl Type {
+    // It would be nice for this to be extensible and not requiring introducing
+    // new matched cases for supporting new types.
     pub fn parse_type(ty: &syn::Type) -> Result<Type> {
         match ty {
             syn::Type::Path(ty) => {
@@ -58,6 +62,9 @@ impl Type {
                                 }
                                 if ident == "RustResult" {
                                     return Ok(Type::RustResult(Box::new(ty)));
+                                }
+                                if ident == "BigArray1" {
+                                    return Ok(Type::BigArray1(Box::new(ty)));
                                 }
                                 if ident == "Fn0" {
                                     return Ok(Type::Fn0(Box::new(ty)));
@@ -130,6 +137,17 @@ impl Type {
             }
             Self::RustResult(ty) => {
                 format!("({}, string) Result.t", ty.to_ocaml_string())
+            }
+            Self::BigArray1(ty) => {
+                let (ocaml_type, elt_type) = match ty.as_ref() {
+                    Self::Ident(ident) => match ident.to_string().as_str() {
+                        "f64" => ("float".to_string(), "Bigarray.float64_elt".to_string()),
+                        "f32" => ("float".to_string(), "Bigarray.float32_elt".to_string()),
+                        ident => (ocamlize(ident), ocamlize(ident)),
+                    },
+                    _ => panic!("unexpected type nested in bigarray {:?}", self),
+                };
+                format!("({}, {}, string) Bigarray.Array1.t", ocaml_type, elt_type)
             }
             Self::Result(ty_ok, ty_err) => {
                 format!("({}, {}) Result.t", ty_ok.to_ocaml_string(), ty_err.to_ocaml_string())

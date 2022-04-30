@@ -1,6 +1,7 @@
 // TODO:
 //   - Call from Rust, start the OCaml runtime in that case?
 //   - Dedicated extern "OCaml" section.
+//   - Provide a way to specify/override the generated ocaml types.
 pub mod bigarray;
 pub mod closure;
 pub mod custom;
@@ -11,6 +12,7 @@ pub mod gc;
 pub mod rooted;
 pub mod to_value;
 pub mod value;
+pub use bigarray::BigArray1;
 pub use custom::Custom;
 pub use error::{RustError, RustResult};
 pub use exn::OCamlExn;

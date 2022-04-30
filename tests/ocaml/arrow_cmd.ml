@@ -45,7 +45,8 @@ let () =
         (Arrow.record_batch_num_columns batch);
       Array.iter f64_indexes ~f:(fun (name, index) ->
           let array = Arrow.record_batch_column batch index in
-          Stdio.printf "  >> %s\n" name;
+          let ba = Option.value_exn (Arrow.array_f64_values_ba array) in
+          Stdio.printf "  >> %s (%d)\n" name (Bigarray.Array1.dim ba);
           let array = Option.value_exn (Arrow.array_f64_values array) in
           Array.iteri array ~f:(Stdio.printf "    %5d %f\n"));
       Array.iter str_indexes ~f:(fun (name, index) ->

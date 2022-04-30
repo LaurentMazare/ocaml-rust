@@ -1,7 +1,7 @@
 use arrow::array::ArrayRef as ArrowArrayRef;
 use arrow::datatypes::DataType as DT;
 use arrow::record_batch::RecordBatch as ArrowRecordBatch;
-use ocaml_rust::{Custom, RustResult};
+use ocaml_rust::{BigArray1, Custom, RustResult};
 use parquet::arrow::arrow_reader::ParquetRecordBatchReader;
 use parquet::arrow::{ArrowReader, ParquetFileArrowReader};
 use parquet::file::reader::SerializedFileReader;
@@ -120,15 +120,24 @@ fn array_null_count(array: &ArrayRef) -> usize {
     array.null_count()
 }
 
-// TODO: Make it possible to use OCaml bigarrays.
 fn array_f32_values(array: &ArrayRef) -> Option<Vec<f32>> {
     let array = array.inner().lock().unwrap();
     array.as_any().downcast_ref::<arrow::array::Float32Array>().map(|x| x.values().to_vec())
 }
 
+fn array_f32_values_ba(array: &ArrayRef) -> Option<BigArray1<f32>> {
+    let array = array.inner().lock().unwrap();
+    array.as_any().downcast_ref::<arrow::array::Float32Array>().map(|x| BigArray1::new(x.values()))
+}
+
 fn array_f64_values(array: &ArrayRef) -> Option<Vec<f64>> {
     let array = array.inner().lock().unwrap();
     array.as_any().downcast_ref::<arrow::array::Float64Array>().map(|x| x.values().to_vec())
+}
+
+fn array_f64_values_ba(array: &ArrayRef) -> Option<BigArray1<f64>> {
+    let array = array.inner().lock().unwrap();
+    array.as_any().downcast_ref::<arrow::array::Float64Array>().map(|x| BigArray1::new(x.values()))
 }
 
 fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>> {
@@ -333,6 +342,8 @@ mod arrow {
 
         fn array_f32_values(array: &ArrayRef) -> Option<Vec<f32>>;
         fn array_f64_values(array: &ArrayRef) -> Option<Vec<f64>>;
+        fn array_f32_values_ba(array: &ArrayRef) -> Option<BigArray1<f32>>;
+        fn array_f64_values_ba(array: &ArrayRef) -> Option<BigArray1<f64>>;
         fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>>;
         fn array_large_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>>;
     }
