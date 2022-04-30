@@ -140,6 +140,31 @@ open! Sexplib.Conv
     = "__ocaml_arrow_array_null_count"
   ;;
 
+  external array_duration_ns_values
+    : array_ref -> Int64.t array option
+    = "__ocaml_arrow_array_duration_ns_values"
+  ;;
+
+  external array_time_ns_values
+    : array_ref -> Int64.t array option
+    = "__ocaml_arrow_array_time_ns_values"
+  ;;
+
+  external array_timestamp_ns_values
+    : array_ref -> Int64.t array option
+    = "__ocaml_arrow_array_timestamp_ns_values"
+  ;;
+
+  external array_date32_values
+    : array_ref -> Int32.t array option
+    = "__ocaml_arrow_array_date32_values"
+  ;;
+
+  external array_date64_values
+    : array_ref -> Int64.t array option
+    = "__ocaml_arrow_array_date64_values"
+  ;;
+
   external array_char_values
     : array_ref -> char array option
     = "__ocaml_arrow_array_char_values"
@@ -163,6 +188,31 @@ open! Sexplib.Conv
   external array_f64_values
     : array_ref -> float array option
     = "__ocaml_arrow_array_f64_values"
+  ;;
+
+  external array_duration_ns_values_ba
+    : array_ref -> (int, Bigarray.int64_elt, string) Bigarray.Array1.t option
+    = "__ocaml_arrow_array_duration_ns_values_ba"
+  ;;
+
+  external array_time_ns_values_ba
+    : array_ref -> (int, Bigarray.int64_elt, string) Bigarray.Array1.t option
+    = "__ocaml_arrow_array_time_ns_values_ba"
+  ;;
+
+  external array_timestamp_ns_values_ba
+    : array_ref -> (int, Bigarray.int64_elt, string) Bigarray.Array1.t option
+    = "__ocaml_arrow_array_timestamp_ns_values_ba"
+  ;;
+
+  external array_date32_values_ba
+    : array_ref -> (int, Bigarray.int32_elt, string) Bigarray.Array1.t option
+    = "__ocaml_arrow_array_date32_values_ba"
+  ;;
+
+  external array_date64_values_ba
+    : array_ref -> (int, Bigarray.int64_elt, string) Bigarray.Array1.t option
+    = "__ocaml_arrow_array_date64_values_ba"
   ;;
 
   external array_char_values_ba

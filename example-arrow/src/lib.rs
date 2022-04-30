@@ -120,7 +120,7 @@ fn array_null_count(array: &ArrayRef) -> usize {
     array.null_count()
 }
 
-macro_rules! array_value_fns {
+macro_rules! value_fns {
     ($value_fn: ident, $value_fn_ba: ident, $typ: ident, $array_typ: ident) => {
         fn $value_fn(array: &ArrayRef) -> Option<Vec<$typ>> {
             let array = array.inner().lock().unwrap();
@@ -137,11 +137,16 @@ macro_rules! array_value_fns {
     };
 }
 
-array_value_fns!(array_char_values, array_char_values_ba, u8, UInt8Array);
-array_value_fns!(array_i32_values, array_i32_values_ba, i32, Int32Array);
-array_value_fns!(array_i64_values, array_i64_values_ba, i64, Int64Array);
-array_value_fns!(array_f32_values, array_f32_values_ba, f32, Float32Array);
-array_value_fns!(array_f64_values, array_f64_values_ba, f64, Float64Array);
+value_fns!(array_duration_ns_values, array_duration_ns_values_ba, i64, DurationNanosecondArray);
+value_fns!(array_time_ns_values, array_time_ns_values_ba, i64, Time64NanosecondArray);
+value_fns!(array_timestamp_ns_values, array_timestamp_ns_values_ba, i64, TimestampNanosecondArray);
+value_fns!(array_date32_values, array_date32_values_ba, i32, Date32Array);
+value_fns!(array_date64_values, array_date64_values_ba, i64, Date64Array);
+value_fns!(array_char_values, array_char_values_ba, u8, UInt8Array);
+value_fns!(array_i32_values, array_i32_values_ba, i32, Int32Array);
+value_fns!(array_i64_values, array_i64_values_ba, i64, Int64Array);
+value_fns!(array_f32_values, array_f32_values_ba, f32, Float32Array);
+value_fns!(array_f64_values, array_f64_values_ba, f64, Float64Array);
 
 fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>> {
     let array = array.inner().lock().unwrap();
@@ -343,11 +348,22 @@ mod arrow {
         fn array_len(array: &ArrayRef) -> usize;
         fn array_null_count(array: &ArrayRef) -> usize;
 
+        fn array_duration_ns_values(array: &ArrayRef) -> Option<Vec<i64>>;
+        fn array_time_ns_values(array: &ArrayRef) -> Option<Vec<i64>>;
+        fn array_timestamp_ns_values(array: &ArrayRef) -> Option<Vec<i64>>;
+        fn array_date32_values(array: &ArrayRef) -> Option<Vec<i32>>;
+        fn array_date64_values(array: &ArrayRef) -> Option<Vec<i64>>;
         fn array_char_values(array: &ArrayRef) -> Option<Vec<u8>>;
         fn array_i32_values(array: &ArrayRef) -> Option<Vec<i32>>;
         fn array_i64_values(array: &ArrayRef) -> Option<Vec<i64>>;
         fn array_f32_values(array: &ArrayRef) -> Option<Vec<f32>>;
         fn array_f64_values(array: &ArrayRef) -> Option<Vec<f64>>;
+
+        fn array_duration_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
+        fn array_time_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
+        fn array_timestamp_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
+        fn array_date32_values_ba(array: &ArrayRef) -> Option<BigArray1<i32>>;
+        fn array_date64_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
         fn array_char_values_ba(array: &ArrayRef) -> Option<BigArray1<u8>>;
         fn array_i32_values_ba(array: &ArrayRef) -> Option<BigArray1<i32>>;
         fn array_i64_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
