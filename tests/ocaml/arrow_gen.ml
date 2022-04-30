@@ -140,6 +140,21 @@ open! Sexplib.Conv
     = "__ocaml_arrow_array_null_count"
   ;;
 
+  external array_char_values
+    : array_ref -> char array option
+    = "__ocaml_arrow_array_char_values"
+  ;;
+
+  external array_i32_values
+    : array_ref -> Int32.t array option
+    = "__ocaml_arrow_array_i32_values"
+  ;;
+
+  external array_i64_values
+    : array_ref -> Int64.t array option
+    = "__ocaml_arrow_array_i64_values"
+  ;;
+
   external array_f32_values
     : array_ref -> float array option
     = "__ocaml_arrow_array_f32_values"
@@ -148,6 +163,21 @@ open! Sexplib.Conv
   external array_f64_values
     : array_ref -> float array option
     = "__ocaml_arrow_array_f64_values"
+  ;;
+
+  external array_char_values_ba
+    : array_ref -> (char, Bigarray.int8_unsigned_elt, string) Bigarray.Array1.t option
+    = "__ocaml_arrow_array_char_values_ba"
+  ;;
+
+  external array_i32_values_ba
+    : array_ref -> (int, Bigarray.int32_elt, string) Bigarray.Array1.t option
+    = "__ocaml_arrow_array_i32_values_ba"
+  ;;
+
+  external array_i64_values_ba
+    : array_ref -> (int, Bigarray.int64_elt, string) Bigarray.Array1.t option
+    = "__ocaml_arrow_array_i64_values_ba"
   ;;
 
   external array_f32_values_ba

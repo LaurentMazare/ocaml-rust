@@ -120,6 +120,7 @@ impl Type {
                 "i32" => "Int32.t".to_string(),
                 "i64" => "Int64.t".to_string(),
                 "f32" | "f64" => "float".to_string(),
+                "u8" => "char".to_string(),
                 ident => ocamlize(ident),
             },
             Self::Tuple(tuple) => {
@@ -143,6 +144,9 @@ impl Type {
                     Self::Ident(ident) => match ident.to_string().as_str() {
                         "f64" => ("float".to_string(), "Bigarray.float64_elt".to_string()),
                         "f32" => ("float".to_string(), "Bigarray.float32_elt".to_string()),
+                        "i64" => ("int".to_string(), "Bigarray.int64_elt".to_string()),
+                        "i32" => ("int".to_string(), "Bigarray.int32_elt".to_string()),
+                        "u8" => ("char".to_string(), "Bigarray.int8_unsigned_elt".to_string()),
                         ident => (ocamlize(ident), ocamlize(ident)),
                     },
                     _ => panic!("unexpected type nested in bigarray {:?}", self),

@@ -29,6 +29,10 @@ impl<E: Elem> BigArray1<E> {
     }
 }
 
+impl Elem for u8 {
+    const KIND: Kind = Kind::UINT8;
+}
+
 impl Elem for f32 {
     const KIND: Kind = Kind::FLOAT32;
 }
