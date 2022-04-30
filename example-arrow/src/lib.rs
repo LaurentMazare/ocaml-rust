@@ -6,6 +6,7 @@ use parquet::arrow::arrow_reader::ParquetRecordBatchReader;
 use parquet::arrow::{ArrowReader, ArrowWriter, ParquetFileArrowReader};
 use parquet::file::reader::SerializedFileReader;
 use std::fs::File;
+use std::sync::Arc;
 
 impl Schema {
     fn of_arrow(schema: &arrow::datatypes::Schema) -> Schema {
@@ -29,7 +30,7 @@ impl Schema {
 fn file_reader(path: String) -> RustResult<FileReader> {
     let file = File::open(&path)?;
     let file_reader = SerializedFileReader::new(file)?;
-    let file_reader = std::sync::Arc::new(file_reader);
+    let file_reader = Arc::new(file_reader);
     let file_reader = ParquetFileArrowReader::new(file_reader);
     Ok(Custom::new(file_reader))
 }
@@ -83,6 +84,13 @@ fn get_record_reader_by_columns(
 fn record_reader_next(record_reader: &RecordReader) -> Option<RustResult<RecordBatch>> {
     let mut record_reader = record_reader.inner().lock().unwrap();
     record_reader.next().map(|x| x.map_err(|err| err.into()).map(CustomConst::new))
+}
+
+fn record_batch_create(columns: Vec<(String, ArrayRef)>) -> RustResult<RecordBatch> {
+    let columns: Vec<_> =
+        columns.into_iter().map(|(col_name, array)| (col_name, array.inner().clone())).collect();
+    let record_batch = ArrowRecordBatch::try_from_iter(columns)?;
+    Ok(CustomConst::new(record_batch))
 }
 
 fn record_batch_schema(record_batch: &RecordBatch) -> Schema {
@@ -377,6 +385,7 @@ mod arrow {
 
         fn record_reader_next(record_reader: &RecordReader) -> Option<RustResult<RecordBatch>>;
 
+        fn record_batch_create(columns: Vec<(String, ArrayRef)>) -> RustResult<RecordBatch>;
         fn record_batch_schema(record_batch: &RecordBatch) -> Schema;
         fn record_batch_num_rows(record_batch: &RecordBatch) -> usize;
         fn record_batch_num_columns(record_batch: &RecordBatch) -> usize;
