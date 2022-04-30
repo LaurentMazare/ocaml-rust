@@ -316,6 +316,16 @@ open! Sexplib.Conv
     = "__ocaml_arrow_array_f64_values_ba"
   ;;
 
+  external array_string_from
+    : string array -> array_ref
+    = "__ocaml_arrow_array_string_from"
+  ;;
+
+  external array_large_string_from
+    : string array -> array_ref
+    = "__ocaml_arrow_array_large_string_from"
+  ;;
+
   external array_string_values
     : array_ref -> string option array option
     = "__ocaml_arrow_array_string_values"

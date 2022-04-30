@@ -216,6 +216,16 @@ value_fns!(array_i64_from, array_i64_values, array_i64_values_ba, i64, Int64Arra
 value_fns!(array_f32_from, array_f32_values, array_f32_values_ba, f32, Float32Array);
 value_fns!(array_f64_from, array_f64_values, array_f64_values_ba, f64, Float64Array);
 
+fn array_string_from(vec: Vec<String>) -> ArrayRef {
+    let array = arrow::array::StringArray::from_iter_values(vec.into_iter());
+    CustomConst::new(Arc::new(array))
+}
+
+fn array_large_string_from(vec: Vec<String>) -> ArrayRef {
+    let array = arrow::array::LargeStringArray::from_iter_values(vec.into_iter());
+    CustomConst::new(Arc::new(array))
+}
+
 fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>> {
     let array = array.inner();
     array
@@ -455,6 +465,9 @@ mod arrow {
         fn array_i64_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
         fn array_f32_values_ba(array: &ArrayRef) -> Option<BigArray1<f32>>;
         fn array_f64_values_ba(array: &ArrayRef) -> Option<BigArray1<f64>>;
+
+        fn array_string_from(v: Vec<String>) -> ArrayRef;
+        fn array_large_string_from(v: Vec<String>) -> ArrayRef;
         fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>>;
         fn array_large_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>>;
     }
