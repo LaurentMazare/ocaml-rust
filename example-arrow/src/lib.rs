@@ -1,3 +1,4 @@
+// TODO: Improve handling of null values.
 use arrow::array::ArrayRef as ArrowArrayRef;
 use arrow::datatypes::DataType as DT;
 use arrow::record_batch::RecordBatch as ArrowRecordBatch;
@@ -166,9 +167,14 @@ fn array_null_count(array: &ArrayRef) -> usize {
 }
 
 macro_rules! value_fns {
-    ($from_fn: ident, $value_fn: ident, $value_fn_ba: ident, $typ: ident, $array_typ: ident) => {
+    ($from_fn: ident, $from_fn_ba: ident, $value_fn: ident, $value_fn_ba: ident, $typ: ident, $array_typ: ident) => {
         fn $from_fn(array: Vec<$typ>) -> ArrayRef {
             let array = arrow::array::$array_typ::from_iter_values(array.into_iter());
+            CustomConst::new(Arc::new(array))
+        }
+
+        fn $from_fn_ba(array: BigArray1<$typ>) -> ArrayRef {
+            let array = arrow::array::$array_typ::from_iter_values(array.data().iter().map(|&x| x));
             CustomConst::new(Arc::new(array))
         }
 
@@ -189,6 +195,7 @@ macro_rules! value_fns {
 
 value_fns!(
     array_duration_ns_from,
+    array_duration_ns_from_ba,
     array_duration_ns_values,
     array_duration_ns_values_ba,
     i64,
@@ -196,6 +203,7 @@ value_fns!(
 );
 value_fns!(
     array_time_ns_from,
+    array_time_ns_from_ba,
     array_time_ns_values,
     array_time_ns_values_ba,
     i64,
@@ -203,18 +211,68 @@ value_fns!(
 );
 value_fns!(
     array_timestamp_ns_from,
+    array_timestamp_ns_from_ba,
     array_timestamp_ns_values,
     array_timestamp_ns_values_ba,
     i64,
     TimestampNanosecondArray
 );
-value_fns!(array_date32_from, array_date32_values, array_date32_values_ba, i32, Date32Array);
-value_fns!(array_date64_from, array_date64_values, array_date64_values_ba, i64, Date64Array);
-value_fns!(array_char_from, array_char_values, array_char_values_ba, u8, UInt8Array);
-value_fns!(array_i32_from, array_i32_values, array_i32_values_ba, i32, Int32Array);
-value_fns!(array_i64_from, array_i64_values, array_i64_values_ba, i64, Int64Array);
-value_fns!(array_f32_from, array_f32_values, array_f32_values_ba, f32, Float32Array);
-value_fns!(array_f64_from, array_f64_values, array_f64_values_ba, f64, Float64Array);
+value_fns!(
+    array_date32_from,
+    array_date32_from_ba,
+    array_date32_values,
+    array_date32_values_ba,
+    i32,
+    Date32Array
+);
+value_fns!(
+    array_date64_from,
+    array_date64_from_ba,
+    array_date64_values,
+    array_date64_values_ba,
+    i64,
+    Date64Array
+);
+value_fns!(
+    array_char_from,
+    array_char_from_ba,
+    array_char_values,
+    array_char_values_ba,
+    u8,
+    UInt8Array
+);
+value_fns!(
+    array_i32_from,
+    array_i32_from_ba,
+    array_i32_values,
+    array_i32_values_ba,
+    i32,
+    Int32Array
+);
+value_fns!(
+    array_i64_from,
+    array_i64_from_ba,
+    array_i64_values,
+    array_i64_values_ba,
+    i64,
+    Int64Array
+);
+value_fns!(
+    array_f32_from,
+    array_f32_from_ba,
+    array_f32_values,
+    array_f32_values_ba,
+    f32,
+    Float32Array
+);
+value_fns!(
+    array_f64_from,
+    array_f64_from_ba,
+    array_f64_values,
+    array_f64_values_ba,
+    f64,
+    Float64Array
+);
 
 fn array_string_from(vec: Vec<String>) -> ArrayRef {
     let array = arrow::array::StringArray::from_iter_values(vec.into_iter());
@@ -432,6 +490,17 @@ mod arrow {
         fn array_data_type(array: &ArrayRef) -> DataType;
         fn array_len(array: &ArrayRef) -> usize;
         fn array_null_count(array: &ArrayRef) -> usize;
+
+        fn array_duration_ns_from_ba(v: BigArray1<i64>) -> ArrayRef;
+        fn array_time_ns_from_ba(v: BigArray1<i64>) -> ArrayRef;
+        fn array_timestamp_ns_from_ba(v: BigArray1<i64>) -> ArrayRef;
+        fn array_date32_from_ba(v: BigArray1<i32>) -> ArrayRef;
+        fn array_date64_from_ba(v: BigArray1<i64>) -> ArrayRef;
+        fn array_char_from_ba(v: BigArray1<u8>) -> ArrayRef;
+        fn array_i32_from_ba(v: BigArray1<i32>) -> ArrayRef;
+        fn array_i64_from_ba(v: BigArray1<i64>) -> ArrayRef;
+        fn array_f32_from_ba(v: BigArray1<f32>) -> ArrayRef;
+        fn array_f64_from_ba(v: BigArray1<f64>) -> ArrayRef;
 
         fn array_duration_ns_from(v: Vec<i64>) -> ArrayRef;
         fn array_time_ns_from(v: Vec<i64>) -> ArrayRef;
