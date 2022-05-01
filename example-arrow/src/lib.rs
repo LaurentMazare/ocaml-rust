@@ -135,6 +135,37 @@ fn record_batch_write_parquet(record_batch: &RecordBatch, path: String) -> RustR
     writer.close()?;
     Ok(())
 }
+fn record_batch_slice(record_batch: &RecordBatch, offset: isize, length: isize) -> RecordBatch {
+    let record_batch = record_batch.inner();
+    let record_batch = record_batch.slice(offset as usize, length as usize);
+    CustomConst::new(record_batch)
+}
+
+fn record_batch_concat(batches: Vec<RecordBatch>) -> RustResult<RecordBatch> {
+    if batches.is_empty() {
+        return Err("empty batch list in record_batch_concat".into());
+    }
+    let schema = batches[0].inner().schema();
+    if let Some((i, _)) =
+        batches.iter().enumerate().find(|&(_, batch)| batch.inner().schema() != schema)
+    {
+        return Err(arrow::error::ArrowError::InvalidArgumentError(format!(
+            "batches[{}] schema is different with argument schema.",
+            i
+        ))
+        .into());
+    }
+    let field_num = schema.fields().len();
+    let mut arrays = Vec::with_capacity(field_num);
+    for i in 0..field_num {
+        let array = arrow::compute::concat(
+            &batches.iter().map(|batch| batch.inner().column(i).as_ref()).collect::<Vec<_>>(),
+        )?;
+        arrays.push(array);
+    }
+    let rb = ArrowRecordBatch::try_new(schema.clone(), arrays)?;
+    Ok(CustomConst::new(rb))
+}
 
 fn writer_new(record_batch: &RecordBatch, path: String) -> RustResult<FileWriter> {
     let record_batch = record_batch.inner();
@@ -499,6 +530,12 @@ mod arrow {
         fn record_batch_num_columns(record_batch: &RecordBatch) -> usize;
         fn record_batch_column(record_batch: &RecordBatch, index: usize) -> ArrayRef;
         fn record_batch_write_parquet(record_batch: &RecordBatch, path: String) -> RustResult<()>;
+        fn record_batch_slice(
+            record_batch: &RecordBatch,
+            offset: isize,
+            length: isize,
+        ) -> RecordBatch;
+        fn record_batch_concat(batches: Vec<RecordBatch>) -> RustResult<RecordBatch>;
 
         fn writer_new(record_batch: &RecordBatch, path: String) -> RustResult<FileWriter>;
         fn writer_write(w: &FileWriter, record_batch: &RecordBatch) -> RustResult<()>;

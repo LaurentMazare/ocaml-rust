@@ -208,6 +208,7 @@ impl NotF64 for String {}
 impl NotF64 for isize {}
 impl NotF64 for usize {}
 impl NotF64 for () {}
+impl<T> NotF64 for &T {}
 impl<T> NotF64 for Vec<T> {}
 impl<T> NotF64 for Option<T> {}
 impl<T1> NotF64 for (T1,) {}

@@ -108,3 +108,6 @@ impl<T: 'static> crate::from_value::FromSysValue for CustomConst<T> {
         CustomConst { _inner: inner.clone() }
     }
 }
+
+impl<T> crate::from_value::NotF64 for Custom<T> {}
+impl<T> crate::from_value::NotF64 for CustomConst<T> {}

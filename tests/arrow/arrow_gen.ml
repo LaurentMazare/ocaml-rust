@@ -141,6 +141,16 @@ open! Sexplib.Conv
     = "__ocaml_arrow_record_batch_write_parquet"
   ;;
 
+  external record_batch_slice
+    : record_batch -> int -> int -> record_batch
+    = "__ocaml_arrow_record_batch_slice"
+  ;;
+
+  external record_batch_concat
+    : record_batch array -> (record_batch, string) Result.t
+    = "__ocaml_arrow_record_batch_concat"
+  ;;
+
   external writer_new
     : record_batch -> string -> (file_writer, string) Result.t
     = "__ocaml_arrow_writer_new"
