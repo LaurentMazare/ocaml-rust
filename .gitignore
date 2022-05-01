@@ -8,5 +8,5 @@ gen/.merlin
 __pycache__
 *~
 .*~
-tests/ocaml/lib*.a
-tests/ocaml/lib*.so
+tests/*/lib*.a
+tests/*/lib*.so
