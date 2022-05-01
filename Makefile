@@ -4,6 +4,7 @@ test:
 	cargo run --manifest-path ./gen/cmd/Cargo.toml -- --rust-file ./example/src/lib.rs --ocaml-file ./tests/basic/test_gen.ml
 	cp ./target/debug/libocaml_rust_example.a tests/basic/
 	dune runtest --root=tests/basic --force --no-buffer
+	cargo build --manifest-path ./example-arrow/Cargo.toml
 	cargo run --manifest-path ./gen/cmd/Cargo.toml -- --rust-file ./example-arrow/src/lib.rs --ocaml-file ./tests/arrow/arrow_gen.ml
 	cp ./target/debug/libocaml_rust_arrow.a tests/arrow/
 	dune runtest --root=tests/arrow --force --no-buffer
