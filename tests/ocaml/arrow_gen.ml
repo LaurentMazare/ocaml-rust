@@ -366,6 +366,11 @@ open! Sexplib.Conv
     = "__ocaml_arrow_array_f64_values_ba"
   ;;
 
+  external array_timestamp_ns_from_with_zone
+    : Int64.t array -> string option -> array_ref
+    = "__ocaml_arrow_array_timestamp_ns_from_with_zone"
+  ;;
+
   external array_string_from
     : string array -> array_ref
     = "__ocaml_arrow_array_string_from"

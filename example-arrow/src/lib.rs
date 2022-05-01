@@ -1,5 +1,5 @@
 // TODO: Improve handling of null values.
-use arrow::array::ArrayRef as ArrowArrayRef;
+use arrow::array::{ArrayRef as ArrowArrayRef, TimestampNanosecondArray};
 use arrow::datatypes::DataType as DT;
 use arrow::record_batch::RecordBatch as ArrowRecordBatch;
 use ocaml_rust::{BigArray1, Custom, CustomConst, RustResult};
@@ -117,7 +117,10 @@ fn record_batch_column(record_batch: &RecordBatch, index: usize) -> ArrayRef {
 fn record_batch_write_parquet(record_batch: &RecordBatch, path: String) -> RustResult<()> {
     let record_batch = record_batch.inner();
     let file = File::create(&path)?;
-    let props = parquet::file::properties::WriterProperties::builder().build();
+    let props = parquet::file::properties::WriterProperties::builder()
+        .set_writer_version(parquet::file::properties::WriterVersion::PARQUET_2_0)
+        .set_compression(parquet::basic::Compression::SNAPPY)
+        .build();
 
     let mut writer = ArrowWriter::try_new(file, record_batch.schema(), Some(props))?;
 
@@ -131,7 +134,10 @@ fn record_batch_write_parquet(record_batch: &RecordBatch, path: String) -> RustR
 fn writer_new(record_batch: &RecordBatch, path: String) -> RustResult<FileWriter> {
     let record_batch = record_batch.inner();
     let file = File::create(&path)?;
-    let props = parquet::file::properties::WriterProperties::builder().build();
+    let props = parquet::file::properties::WriterProperties::builder()
+        .set_writer_version(parquet::file::properties::WriterVersion::PARQUET_2_0)
+        .set_compression(parquet::basic::Compression::SNAPPY)
+        .build();
 
     let mut writer = ArrowWriter::try_new(file, record_batch.schema(), Some(props))?;
     writer.write(record_batch)?;
@@ -273,6 +279,11 @@ value_fns!(
     f64,
     Float64Array
 );
+
+fn array_timestamp_ns_from_with_zone(vec: Vec<i64>, zone: Option<String>) -> ArrayRef {
+    let array: TimestampNanosecondArray = arrow::array::PrimitiveArray::from_vec(vec, zone);
+    CustomConst::new(Arc::new(array))
+}
 
 fn array_string_from(vec: Vec<String>) -> ArrayRef {
     let array = arrow::array::StringArray::from_iter_values(vec.into_iter());
@@ -534,6 +545,8 @@ mod arrow {
         fn array_i64_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
         fn array_f32_values_ba(array: &ArrayRef) -> Option<BigArray1<f32>>;
         fn array_f64_values_ba(array: &ArrayRef) -> Option<BigArray1<f64>>;
+
+        fn array_timestamp_ns_from_with_zone(v: Vec<i64>, zone: Option<String>) -> ArrayRef;
 
         fn array_string_from(v: Vec<String>) -> ArrayRef;
         fn array_large_string_from(v: Vec<String>) -> ArrayRef;
