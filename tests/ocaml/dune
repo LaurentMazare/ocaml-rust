@@ -14,15 +14,16 @@
  (preprocess (pps ppx_expect ppx_sexp_conv)))
 
 (library
- (name arrow_gen)
- (modules arrow_gen)
+ (name arrow_lib)
+ (modules arrow_gen arrow_test)
  (foreign_archives ocaml_rust_arrow)
  (libraries base sexplib stdio)
- (preprocess (pps ppx_sexp_conv))
+ (inline_tests)
+ (preprocess (pps ppx_expect ppx_sexp_conv))
  (c_library_flags (-lpthread -lc -lm)))
 
 (executable
  (name arrow_cmd)
  (modules arrow_cmd)
- (libraries arrow_gen base sexplib stdio)
+ (libraries arrow_lib base sexplib stdio)
  (preprocess (pps ppx_sexp_conv)))

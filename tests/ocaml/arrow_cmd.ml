@@ -1,6 +1,6 @@
 open! Base
 open! Sexplib.Conv
-open! Arrow_gen
+open! Arrow_lib.Arrow_gen
 
 let ok_exn = function
   | Ok ok -> ok

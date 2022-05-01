@@ -111,6 +111,11 @@ open! Sexplib.Conv
     = "__ocaml_arrow_record_batch_create"
   ;;
 
+  external record_batch_debug
+    : record_batch -> string
+    = "__ocaml_arrow_record_batch_debug"
+  ;;
+
   external record_batch_schema
     : record_batch -> schema
     = "__ocaml_arrow_record_batch_schema"
@@ -167,52 +172,52 @@ open! Sexplib.Conv
   ;;
 
   external array_duration_ns_from_ba
-    : (int, Bigarray.int64_elt, string) Bigarray.Array1.t -> array_ref
+    : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
     = "__ocaml_arrow_array_duration_ns_from_ba"
   ;;
 
   external array_time_ns_from_ba
-    : (int, Bigarray.int64_elt, string) Bigarray.Array1.t -> array_ref
+    : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
     = "__ocaml_arrow_array_time_ns_from_ba"
   ;;
 
   external array_timestamp_ns_from_ba
-    : (int, Bigarray.int64_elt, string) Bigarray.Array1.t -> array_ref
+    : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
     = "__ocaml_arrow_array_timestamp_ns_from_ba"
   ;;
 
   external array_date32_from_ba
-    : (int, Bigarray.int32_elt, string) Bigarray.Array1.t -> array_ref
+    : (int, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
     = "__ocaml_arrow_array_date32_from_ba"
   ;;
 
   external array_date64_from_ba
-    : (int, Bigarray.int64_elt, string) Bigarray.Array1.t -> array_ref
+    : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
     = "__ocaml_arrow_array_date64_from_ba"
   ;;
 
   external array_char_from_ba
-    : (char, Bigarray.int8_unsigned_elt, string) Bigarray.Array1.t -> array_ref
+    : (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
     = "__ocaml_arrow_array_char_from_ba"
   ;;
 
   external array_i32_from_ba
-    : (int, Bigarray.int32_elt, string) Bigarray.Array1.t -> array_ref
+    : (int, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
     = "__ocaml_arrow_array_i32_from_ba"
   ;;
 
   external array_i64_from_ba
-    : (int, Bigarray.int64_elt, string) Bigarray.Array1.t -> array_ref
+    : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
     = "__ocaml_arrow_array_i64_from_ba"
   ;;
 
   external array_f32_from_ba
-    : (float, Bigarray.float32_elt, string) Bigarray.Array1.t -> array_ref
+    : (float, Bigarray.float32_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
     = "__ocaml_arrow_array_f32_from_ba"
   ;;
 
   external array_f64_from_ba
-    : (float, Bigarray.float64_elt, string) Bigarray.Array1.t -> array_ref
+    : (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
     = "__ocaml_arrow_array_f64_from_ba"
   ;;
 
@@ -317,52 +322,52 @@ open! Sexplib.Conv
   ;;
 
   external array_duration_ns_values_ba
-    : array_ref -> (int, Bigarray.int64_elt, string) Bigarray.Array1.t option
+    : array_ref -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrow_array_duration_ns_values_ba"
   ;;
 
   external array_time_ns_values_ba
-    : array_ref -> (int, Bigarray.int64_elt, string) Bigarray.Array1.t option
+    : array_ref -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrow_array_time_ns_values_ba"
   ;;
 
   external array_timestamp_ns_values_ba
-    : array_ref -> (int, Bigarray.int64_elt, string) Bigarray.Array1.t option
+    : array_ref -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrow_array_timestamp_ns_values_ba"
   ;;
 
   external array_date32_values_ba
-    : array_ref -> (int, Bigarray.int32_elt, string) Bigarray.Array1.t option
+    : array_ref -> (int, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrow_array_date32_values_ba"
   ;;
 
   external array_date64_values_ba
-    : array_ref -> (int, Bigarray.int64_elt, string) Bigarray.Array1.t option
+    : array_ref -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrow_array_date64_values_ba"
   ;;
 
   external array_char_values_ba
-    : array_ref -> (char, Bigarray.int8_unsigned_elt, string) Bigarray.Array1.t option
+    : array_ref -> (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrow_array_char_values_ba"
   ;;
 
   external array_i32_values_ba
-    : array_ref -> (int, Bigarray.int32_elt, string) Bigarray.Array1.t option
+    : array_ref -> (int, Bigarray.int32_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrow_array_i32_values_ba"
   ;;
 
   external array_i64_values_ba
-    : array_ref -> (int, Bigarray.int64_elt, string) Bigarray.Array1.t option
+    : array_ref -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrow_array_i64_values_ba"
   ;;
 
   external array_f32_values_ba
-    : array_ref -> (float, Bigarray.float32_elt, string) Bigarray.Array1.t option
+    : array_ref -> (float, Bigarray.float32_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrow_array_f32_values_ba"
   ;;
 
   external array_f64_values_ba
-    : array_ref -> (float, Bigarray.float64_elt, string) Bigarray.Array1.t option
+    : array_ref -> (float, Bigarray.float64_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrow_array_f64_values_ba"
   ;;
 

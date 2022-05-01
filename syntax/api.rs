@@ -155,7 +155,7 @@ impl Type {
                     },
                     _ => panic!("unexpected type nested in bigarray {:?}", self),
                 };
-                format!("({}, {}, string) Bigarray.Array1.t", ocaml_type, elt_type)
+                format!("({}, {}, Bigarray.c_layout) Bigarray.Array1.t", ocaml_type, elt_type)
             }
             Self::Result(ty_ok, ty_err) => {
                 format!("({}, {}) Result.t", ty_ok.to_ocaml_string(), ty_err.to_ocaml_string())

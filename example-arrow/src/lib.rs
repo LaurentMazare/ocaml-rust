@@ -94,6 +94,11 @@ fn record_batch_create(columns: Vec<(String, ArrayRef)>) -> RustResult<RecordBat
     Ok(CustomConst::new(record_batch))
 }
 
+fn record_batch_debug(record_batch: &RecordBatch) -> String {
+    let record_batch = record_batch.inner();
+    format!("{:?}", record_batch)
+}
+
 fn record_batch_schema(record_batch: &RecordBatch) -> Schema {
     let record_batch = record_batch.inner();
     Schema::of_arrow(record_batch.schema().as_ref())
@@ -488,6 +493,7 @@ mod arrow {
         fn record_reader_next(record_reader: &RecordReader) -> Option<RustResult<RecordBatch>>;
 
         fn record_batch_create(columns: Vec<(String, ArrayRef)>) -> RustResult<RecordBatch>;
+        fn record_batch_debug(record_batch: &RecordBatch) -> String;
         fn record_batch_schema(record_batch: &RecordBatch) -> Schema;
         fn record_batch_num_rows(record_batch: &RecordBatch) -> usize;
         fn record_batch_num_columns(record_batch: &RecordBatch) -> usize;
