@@ -191,16 +191,16 @@ fn expand_struct(
     expanded.extend((&item).into_token_stream());
     let struct_ident = &item.ident;
     let nfields = item.fields.len();
+    let all_float = item.fields.iter().all(|field| match &field.ty {
+        syn::Type::Path(path) => {
+            let ty = &path.path.segments.last().unwrap().ident;
+            ty == "f32" || ty == "f64"
+        }
+        _ => false,
+    });
     {
         let mut fields: Vec<proc_macro2::TokenStream> = Vec::new();
         let mut let_fields: Vec<proc_macro2::TokenStream> = Vec::new();
-        let all_float = item.fields.iter().all(|field| match &field.ty {
-            syn::Type::Path(path) => {
-                let ty = &path.path.segments.last().unwrap().ident;
-                ty == "f32" || ty == "f64"
-            }
-            _ => false,
-        });
         for (field_idx, field) in item.fields.iter().enumerate() {
             let field_ident = &field.ident;
             let ty = &field.ty;
@@ -258,11 +258,25 @@ fn expand_struct(
             let field_ident = &field.ident;
             let ty = &field.ty;
             fields.push(quote! { #field_ident });
-            set_fields.push(quote! {
-            let #tmp_ident = <#ty as ocaml_rust::to_value::ToValue>::to_value(#field_ident);
-            unsafe { ocaml_sys::store_field(rv.value().value, #field_idx, #tmp_ident)};
-               })
+            let q = if all_float {
+                quote! {
+                    let #tmp_ident = unsafe { ocaml_sys::field(v, #field_idx) as *mut f64 };
+                    unsafe { *#tmp_ident = *#field_ident as f64 };
+                }
+            } else {
+                quote! {
+                    let #tmp_ident = <#ty as ocaml_rust::to_value::ToValue>::to_value(#field_ident);
+                    unsafe { ocaml_sys::store_field(rv.value().value, #field_idx, #tmp_ident)};
+                }
+            };
+            set_fields.push(q)
         }
+
+        let init = if all_float {
+            quote! { ocaml_sys::caml_alloc(#nfields, ocaml_sys::DOUBLE_ARRAY) }
+        } else {
+            quote! { ocaml_sys::caml_alloc_tuple(#nfields) }
+        };
 
         expanded.extend(quote! {
             impl ocaml_rust::from_value::NotF64 for #struct_ident {}
@@ -270,7 +284,7 @@ fn expand_struct(
                 fn to_value(&self) -> ocaml_sys::Value
                 {
                     let #struct_ident { #(#fields,)* } = self;
-                    let v = unsafe { ocaml_sys::caml_alloc_tuple(#nfields) };
+                    let v = unsafe { #init };
                     let rv : ocaml_rust::RootedValue<()> = ocaml_rust::RootedValue::create(v);
                     #(#set_fields)*
                     rv.value().value

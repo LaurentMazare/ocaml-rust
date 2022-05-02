@@ -135,4 +135,9 @@ open! Sexplib.Conv
     = "__ocaml_ffi_double_array_add_quat"
   ;;
 
+  external create_quat
+    : float -> float -> float -> float -> quaternion
+    = "__ocaml_ffi_double_array_create_quat"
+  ;;
+
 end

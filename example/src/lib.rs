@@ -215,13 +215,17 @@ mod ffi_double_array {
 
     extern "Rust" {
         fn add_ones(v: Vec<f64>) -> Vec<f64>;
-
         fn add_quat(q1: &Quaternion, q2: Quaternion) -> Quaternion;
+        fn create_quat(a: f64, b: f64, c: f32, d: f64) -> Quaternion;
     }
 }
 
 fn add_ones(v: Vec<f64>) -> Vec<f64> {
     v.into_iter().map(|x| x + 1.).collect()
+}
+
+fn create_quat(a: f64, b: f64, c: f32, d: f64) -> Quaternion {
+    Quaternion { a, b, c, d }
 }
 
 fn add_quat(q1: &Quaternion, q2: Quaternion) -> Quaternion {
