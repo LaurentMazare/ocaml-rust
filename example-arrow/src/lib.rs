@@ -163,7 +163,7 @@ fn record_batch_concat(batches: Vec<RecordBatch>) -> RustResult<RecordBatch> {
         )?;
         arrays.push(array);
     }
-    let rb = ArrowRecordBatch::try_new(schema.clone(), arrays)?;
+    let rb = ArrowRecordBatch::try_new(schema, arrays)?;
     Ok(CustomConst::new(rb))
 }
 
