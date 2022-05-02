@@ -132,3 +132,18 @@ let%expect_test _ =
 
     ==== Test GC Safety ====
     0 0 1 664 |}]
+
+let%expect_test _ =
+  Stdio.printf "\n==== Test Double Array ====\n";
+  let vs = Ffi_double_array.add_ones [| 3.14; 15.92; 65.35 |] in
+  Stdio.print_s ([%sexp_of: float array] vs);
+  [%expect {|
+    ==== Test Double Array ====
+    (4.1400000000000006 16.92 66.35) |}];
+  let q = { Ffi_double_array.a = 3.14; b = 15.92; c = 65.35; d = 89.79 } in
+  let q_2 = Ffi_double_array.add_quat q q in
+  Stdio.print_s ([%sexp_of: Ffi_double_array.quaternion] q_2);
+  [%expect {|
+    Quaternion { a: 3.14, b: 15.92, c: 65.35, d: 89.79 } Quaternion { a: 3.14, b: 15.92, c: 65.35, d: 89.79 }
+    ((a 6.94557779813029E-310) (b 6.9455777981295E-310) (c 6.94557779812871E-310)
+     (d 6.94557779812792E-310)) |}]

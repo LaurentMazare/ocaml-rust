@@ -194,6 +194,13 @@ fn expand_struct(
     {
         let mut fields: Vec<proc_macro2::TokenStream> = Vec::new();
         let mut let_fields: Vec<proc_macro2::TokenStream> = Vec::new();
+        let all_float = item.fields.iter().all(|field| match &field.ty {
+            syn::Type::Path(path) => {
+                let ty = &path.path.segments.last().unwrap().ident;
+                ty == "f32" || ty == "f64"
+            }
+            _ => false,
+        });
         for (field_idx, field) in item.fields.iter().enumerate() {
             let field_ident = &field.ident;
             let ty = &field.ty;
@@ -205,16 +212,43 @@ fn expand_struct(
             })
         }
 
-        // TODO: handle FLOAT_ARRAY
-        expanded.extend(quote! {
-            impl ocaml_rust::from_value::FromSysValue for #struct_ident {
-                unsafe fn from_value(v: ocaml_sys::Value) -> Self {
-                    ocaml_rust::from_value::check_tag("record", v, 0);
-                    #(#let_fields)*
-                    #struct_ident { #(#fields,)* }
-                }
+        if all_float {
+            let mut let_fields_float: Vec<proc_macro2::TokenStream> = Vec::new();
+            for (field_idx, field) in item.fields.iter().enumerate() {
+                let field_ident = &field.ident;
+                let ty = &field.ty;
+                let_fields_float.push(quote! {
+                    let _tmp_value = ocaml_sys::field(v, #field_idx);
+                    let #field_ident = *(_tmp_value as *const f64) as #ty;
+                })
             }
-        });
+
+            expanded.extend(quote! {
+                impl ocaml_rust::from_value::FromSysValue for #struct_ident {
+                    unsafe fn from_value(v: ocaml_sys::Value) -> Self {
+                        let tag = ocaml_sys::tag_val(v);
+                        if tag == ocaml_sys::DOUBLE_ARRAY {
+                            #(#let_fields_float)*
+                            #struct_ident { #(#fields,)* }
+                        } else {
+                            ocaml_rust::from_value::check_tag("record", v, 0);
+                            #(#let_fields)*
+                            #struct_ident { #(#fields,)* }
+                        }
+                    }
+                }
+            });
+        } else {
+            expanded.extend(quote! {
+                impl ocaml_rust::from_value::FromSysValue for #struct_ident {
+                    unsafe fn from_value(v: ocaml_sys::Value) -> Self {
+                            ocaml_rust::from_value::check_tag("record", v, 0);
+                            #(#let_fields)*
+                            #struct_ident { #(#fields,)* }
+                        }
+                    }
+            });
+        }
     }
     {
         let mut fields: Vec<proc_macro2::TokenStream> = Vec::new();

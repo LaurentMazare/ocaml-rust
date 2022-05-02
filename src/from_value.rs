@@ -163,7 +163,7 @@ impl FromSysValue for Vec<f32> {
             let mut vs = Vec::new();
             for idx in 0..len {
                 let t = ocaml_sys::field(v, idx);
-                vs.push(*(t as *const f32))
+                vs.push(*(t as *const f64) as f32)
             }
             vs
         } else {

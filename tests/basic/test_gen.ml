@@ -117,3 +117,22 @@ module Ffi7 = struct
   ;;
 
 end
+module Ffi_double_array = struct
+open! Sexplib.Conv
+  type quaternion = {
+    a: float;
+    b: float;
+    c: float;
+    d: float;
+  } [@@boxed][@@deriving sexp];;
+  external add_ones
+    : float array -> float array
+    = "__ocaml_ffi_double_array_add_ones"
+  ;;
+
+  external add_quat
+    : quaternion -> quaternion -> quaternion
+    = "__ocaml_ffi_double_array_add_quat"
+  ;;
+
+end

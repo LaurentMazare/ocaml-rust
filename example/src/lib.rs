@@ -199,3 +199,32 @@ fn generate(i0: isize) -> ((((i64, i64), Compact), i64), i64) {
     println!("Rust: {} {} {} {} {}", i0, a, b, c, d);
     ((((a, b), CompactToken()), c), d)
 }
+
+#[ocaml_rust::bridge]
+mod ffi_double_array {
+    ocaml_include!("open! Sexplib.Conv");
+
+    #[ocaml_deriving(sexp)]
+    #[derive(Debug, Clone)]
+    struct Quaternion {
+        a: f64,
+        b: f64,
+        c: f32,
+        d: f64,
+    }
+
+    extern "Rust" {
+        fn add_ones(v: Vec<f64>) -> Vec<f64>;
+
+        fn add_quat(q1: &Quaternion, q2: Quaternion) -> Quaternion;
+    }
+}
+
+fn add_ones(v: Vec<f64>) -> Vec<f64> {
+    v.into_iter().map(|x| x + 1.).collect()
+}
+
+fn add_quat(q1: &Quaternion, q2: Quaternion) -> Quaternion {
+    println!("{:?} {:?}", q1, q2);
+    Quaternion { a: q1.a + q2.a, b: q1.b + q2.b, c: q1.c + q2.c, d: q1.d + q2.d }
+}
