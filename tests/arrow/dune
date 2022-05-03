@@ -1,10 +1,10 @@
 (library
  (name arrow_lib)
- (modules arrow_gen arrow_test)
+ (modules arrow_core arrow_gen arrow_test)
  (foreign_archives ocaml_rust_arrow)
- (libraries base sexplib stdio)
+ (libraries core sexplib stdio)
  (inline_tests)
- (preprocess (pps ppx_expect ppx_sexp_conv))
+ (preprocess (pps ppx_expect ppx_sexp_conv ppx_sexp_message))
  (c_library_flags (-lpthread -lc -lm)))
 
 (executable

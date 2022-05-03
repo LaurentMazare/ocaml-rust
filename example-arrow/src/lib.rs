@@ -244,10 +244,10 @@ value_fns!(
     DurationNanosecondArray
 );
 value_fns!(
-    array_time_ns_from,
-    array_time_ns_from_ba,
-    array_time_ns_values,
-    array_time_ns_values_ba,
+    array_time64_ns_from,
+    array_time64_ns_from_ba,
+    array_time64_ns_values,
+    array_time64_ns_values_ba,
     i64,
     Time64NanosecondArray
 );
@@ -546,7 +546,7 @@ mod arrow {
         fn array_null_count(array: &ArrayRef) -> usize;
 
         fn array_duration_ns_from_ba(v: BigArray1<i64>) -> ArrayRef;
-        fn array_time_ns_from_ba(v: BigArray1<i64>) -> ArrayRef;
+        fn array_time64_ns_from_ba(v: BigArray1<i64>) -> ArrayRef;
         fn array_timestamp_ns_from_ba(v: BigArray1<i64>) -> ArrayRef;
         fn array_date32_from_ba(v: BigArray1<i32>) -> ArrayRef;
         fn array_date64_from_ba(v: BigArray1<i64>) -> ArrayRef;
@@ -557,7 +557,7 @@ mod arrow {
         fn array_f64_from_ba(v: BigArray1<f64>) -> ArrayRef;
 
         fn array_duration_ns_from(v: Vec<i64>) -> ArrayRef;
-        fn array_time_ns_from(v: Vec<i64>) -> ArrayRef;
+        fn array_time64_ns_from(v: Vec<i64>) -> ArrayRef;
         fn array_timestamp_ns_from(v: Vec<i64>) -> ArrayRef;
         fn array_date32_from(v: Vec<i32>) -> ArrayRef;
         fn array_date64_from(v: Vec<i64>) -> ArrayRef;
@@ -568,7 +568,7 @@ mod arrow {
         fn array_f64_from(v: Vec<f64>) -> ArrayRef;
 
         fn array_duration_ns_values(array: &ArrayRef) -> Option<Vec<i64>>;
-        fn array_time_ns_values(array: &ArrayRef) -> Option<Vec<i64>>;
+        fn array_time64_ns_values(array: &ArrayRef) -> Option<Vec<i64>>;
         fn array_timestamp_ns_values(array: &ArrayRef) -> Option<Vec<i64>>;
         fn array_date32_values(array: &ArrayRef) -> Option<Vec<i32>>;
         fn array_date64_values(array: &ArrayRef) -> Option<Vec<i64>>;
@@ -579,7 +579,7 @@ mod arrow {
         fn array_f64_values(array: &ArrayRef) -> Option<Vec<f64>>;
 
         fn array_duration_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
-        fn array_time_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
+        fn array_time64_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
         fn array_timestamp_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
         fn array_date32_values_ba(array: &ArrayRef) -> Option<BigArray1<i32>>;
         fn array_date64_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
