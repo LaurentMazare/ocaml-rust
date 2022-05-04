@@ -72,3 +72,18 @@ module Record_batch : sig
   val of_record_batch : A.record_batch -> t
   val record_batch : t -> A.record_batch
 end
+
+module Reader : sig
+  type t
+
+  val create : ?column_names:string list -> string -> batch_size:int -> t result
+  val next : t -> [ `Eof | `Batch of Record_batch.t result ]
+end
+
+module Writer : sig
+  type t
+
+  val create : string -> t
+  val append : t -> Record_batch.t -> unit result
+  val close : t -> unit result
+end

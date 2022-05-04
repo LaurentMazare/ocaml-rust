@@ -3,6 +3,7 @@
    - Handle time/date types.
    *)
 open! Core
+open Result.Monad_infix
 module A = Arrow_gen.Arrow
 
 type 'a result = ('a, string) Result.t
@@ -236,7 +237,6 @@ module Record_batch = struct
   let write_parquet t filename = A.record_batch_write_parquet t.data filename
 
   let read_parquet ?column_names filename =
-    let open Result.Monad_infix in
     A.file_reader filename
     >>= fun file_reader ->
     let metadata = A.parquet_metadata file_reader in
@@ -284,4 +284,69 @@ module Record_batch = struct
           (column_name : string)
           ~existing_columns:(Map.keys t.column_indexes : string list)]
       |> raise_s
+end
+
+module Reader = struct
+  type t = A.record_reader
+
+  let create ?column_names filename ~batch_size =
+    A.file_reader filename
+    >>= fun file_reader ->
+    match column_names with
+    | None -> A.get_record_reader file_reader batch_size
+    | Some column_names ->
+      let column_names = String.Hash_set.of_list column_names in
+      A.schema file_reader
+      >>= fun schema ->
+      let column_indexes =
+        Array.filter_mapi schema.fields ~f:(fun index field ->
+            if Hash_set.mem column_names field.A.name
+            then (
+              Hash_set.remove column_names field.A.name;
+              Some index)
+            else None)
+      in
+      if Hash_set.is_empty column_names
+      then A.get_record_reader_by_columns file_reader column_indexes batch_size
+      else
+        Error
+          (sprintf
+             "missing column names %s"
+             ([%sexp_of: String.Hash_set.t] column_names |> Sexp.to_string_mach))
+
+  let next t =
+    match A.record_reader_next t with
+    | None -> `Eof
+    | Some record_batch ->
+      `Batch (Result.map record_batch ~f:Record_batch.of_record_batch)
+end
+
+module Writer = struct
+  module Writer = struct
+    type t =
+      | Not_initialized
+      | Writer of A.file_writer
+      | Closed
+  end
+
+  type t =
+    { mutable writer : Writer.t
+    ; filename : string
+    }
+
+  let create filename = { writer = Not_initialized; filename }
+
+  let append t record_batch =
+    match t.writer with
+    | Writer writer -> A.writer_write writer record_batch.Record_batch.data
+    | Closed -> Error "writer has been closed"
+    | Not_initialized ->
+      A.writer_new record_batch.data t.filename
+      >>| fun writer -> t.writer <- Writer writer
+
+  let close t =
+    (match t.writer with
+    | Writer writer -> A.writer_close writer
+    | Not_initialized | Closed -> Ok ())
+    >>| fun () -> t.writer <- Closed
 end
