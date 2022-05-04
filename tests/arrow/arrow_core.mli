@@ -1,6 +1,12 @@
 open! Core
 module A = Arrow_gen.Arrow
 
+val set_default_zone : Time_ns_unix.Zone.t -> unit
+
+type 'a result = ('a, string) Result.t
+
+val ok_exn : 'a result -> 'a
+
 module Data_type : sig
   type _ t =
     | Int : int t
@@ -29,4 +35,16 @@ module Column : sig
   val data_type : 'a t -> 'a Data_type.t
   val len : _ t -> int
   val null_count : _ t -> int
+end
+
+module Record_batch : sig
+  type t
+
+  val create : (string * Column.packed) list -> t result
+  val debug_string : t -> string
+  val schema : t -> A.schema
+  val concat : t list -> t result
+
+  (* Parquet read/write. *)
+  val write_parquet : t -> string -> unit result
 end

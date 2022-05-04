@@ -5,7 +5,14 @@
 open! Core
 module A = Arrow_gen.Arrow
 
-let zone = ref "utc"
+type 'a result = ('a, string) Result.t
+
+let ok_exn = function
+  | Ok ok -> ok
+  | Error err -> failwith err
+
+let zone = ref Time_ns_unix.Zone.utc
+let set_default_zone z = zone := z
 
 module Data_type = struct
   type _ t =
@@ -57,7 +64,8 @@ module Column = struct
           Array.map data ~f:(fun ts ->
               Time_ns.to_int_ns_since_epoch ts |> Int64.of_int_exn)
         in
-        A.array_timestamp_ns_from_with_zone data (Some !zone)
+        let zone = Time_ns_unix.Zone.to_string !zone in
+        A.array_timestamp_ns_from_with_zone data (Some zone)
       | Ofday ->
         Array.map data ~f:(fun od ->
             Time_ns.Ofday.to_span_since_start_of_day od
@@ -111,6 +119,11 @@ module Column = struct
         Option.value_exn (A.array_time64_ns_values t.data)
         |> Array.map ~f:(fun d ->
                Int64.to_int_exn d * time_unit_mult |> Time_ns.Span.of_int_ns)
+      | Timestamp (time_unit, _zone), Time ->
+        let time_unit_mult = time_unit_mult time_unit in
+        Option.value_exn (A.array_timestamp_ns_values t.data)
+        |> Array.map ~f:(fun ts ->
+               Int64.to_int_exn ts * time_unit_mult |> Time_ns.of_int_ns_since_epoch)
       | data_type, _data_type ->
         [%message "unsupported data type" (data_type : A.data_type)] |> raise_s
     in
@@ -127,4 +140,17 @@ module Column = struct
     | String -> to_array t |> [%sexp_of: string array]
 
   let sexp_of_packed (P t) = sexp_of t
+end
+
+module Record_batch = struct
+  type t = A.record_batch
+
+  let create columns =
+    Array.of_list_map columns ~f:(fun (name, Column.P column) -> name, column.data)
+    |> A.record_batch_create
+
+  let debug_string = A.record_batch_debug
+  let schema = A.record_batch_schema
+  let concat ts = Array.of_list ts |> A.record_batch_concat
+  let write_parquet t filename = A.record_batch_write_parquet t filename
 end
