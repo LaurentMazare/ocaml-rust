@@ -47,4 +47,5 @@ module Record_batch : sig
 
   (* Parquet read/write. *)
   val write_parquet : t -> string -> unit result
+  val read_parquet : ?column_names:string list -> string -> t result
 end
