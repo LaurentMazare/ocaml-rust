@@ -106,6 +106,11 @@ open! Sexplib.Conv
     = "__ocaml_arrow_record_reader_next"
   ;;
 
+  external record_reader_close
+    : record_reader -> unit
+    = "__ocaml_arrow_record_reader_close"
+  ;;
+
   external record_batch_create
     : (string * array_ref) array -> (record_batch, string) Result.t
     = "__ocaml_arrow_record_batch_create"

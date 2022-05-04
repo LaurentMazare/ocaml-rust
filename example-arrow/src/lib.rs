@@ -26,8 +26,6 @@ impl Schema {
     }
 }
 
-// TODO: Add an explicit close function rather than rely on the GC
-// collecting the file to trigger the close.
 fn file_reader(path: String) -> RustResult<FileReader> {
     let file = File::open(&path)?;
     let file_reader = SerializedFileReader::new(file)?;
@@ -70,7 +68,7 @@ fn schema(reader: &FileReader) -> RustResult<Schema> {
 
 fn get_record_reader(reader: &FileReader, batch_size: usize) -> RustResult<RecordReader> {
     let mut reader = reader.inner().lock().unwrap();
-    Ok(Custom::new(reader.get_record_reader(batch_size)?))
+    Ok(Custom::new(Some(reader.get_record_reader(batch_size)?)))
 }
 
 fn get_record_reader_by_columns(
@@ -79,12 +77,23 @@ fn get_record_reader_by_columns(
     batch_size: usize,
 ) -> RustResult<RecordReader> {
     let mut reader = reader.inner().lock().unwrap();
-    Ok(Custom::new(reader.get_record_reader_by_columns(columns.into_iter(), batch_size)?))
+    let reader = reader.get_record_reader_by_columns(columns.into_iter(), batch_size)?;
+    Ok(Custom::new(Some(reader)))
 }
 
 fn record_reader_next(record_reader: &RecordReader) -> Option<RustResult<RecordBatch>> {
     let mut record_reader = record_reader.inner().lock().unwrap();
-    record_reader.next().map(|x| x.map_err(|err| err.into()).map(CustomConst::new))
+    match record_reader.as_mut() {
+        None => None,
+        Some(record_reader) => {
+            record_reader.next().map(|x| x.map_err(|err| err.into()).map(CustomConst::new))
+        }
+    }
+}
+
+fn record_reader_close(record_reader: &RecordReader) {
+    let mut record_reader = record_reader.inner().lock().unwrap();
+    *record_reader = None
 }
 
 fn record_batch_create(columns: Vec<(String, ArrayRef)>) -> RustResult<RecordBatch> {
@@ -417,7 +426,7 @@ mod arrow {
     ocaml_include!("open! Sexplib.Conv");
     type FileReader = Custom<ParquetFileArrowReader>;
     type FileWriter = Custom<ArrowWriter<std::fs::File>>;
-    type RecordReader = Custom<ParquetRecordBatchReader>;
+    type RecordReader = Custom<Option<ParquetRecordBatchReader>>;
     type RecordBatch = CustomConst<ArrowRecordBatch>;
     type ArrayRef = CustomConst<ArrowArrayRef>;
 
@@ -522,6 +531,7 @@ mod arrow {
         ) -> RustResult<RecordReader>;
 
         fn record_reader_next(record_reader: &RecordReader) -> Option<RustResult<RecordBatch>>;
+        fn record_reader_close(record_reader: &RecordReader);
 
         fn record_batch_create(columns: Vec<(String, ArrayRef)>) -> RustResult<RecordBatch>;
         fn record_batch_debug(record_batch: &RecordBatch) -> String;

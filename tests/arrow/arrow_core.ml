@@ -287,38 +287,46 @@ module Record_batch = struct
 end
 
 module Reader = struct
-  type t = A.record_reader
+  type t =
+    { record_reader : A.record_reader
+    ; file_reader : A.file_reader
+    }
 
   let create ?column_names filename ~batch_size =
     A.file_reader filename
     >>= fun file_reader ->
-    match column_names with
-    | None -> A.get_record_reader file_reader batch_size
-    | Some column_names ->
-      let column_names = String.Hash_set.of_list column_names in
-      A.schema file_reader
-      >>= fun schema ->
-      let column_indexes =
-        Array.filter_mapi schema.fields ~f:(fun index field ->
-            if Hash_set.mem column_names field.A.name
-            then (
-              Hash_set.remove column_names field.A.name;
-              Some index)
-            else None)
-      in
-      if Hash_set.is_empty column_names
-      then A.get_record_reader_by_columns file_reader column_indexes batch_size
-      else
-        Error
-          (sprintf
-             "missing column names %s"
-             ([%sexp_of: String.Hash_set.t] column_names |> Sexp.to_string_mach))
+    let record_reader =
+      match column_names with
+      | None -> A.get_record_reader file_reader batch_size
+      | Some column_names ->
+        let column_names = String.Hash_set.of_list column_names in
+        A.schema file_reader
+        >>= fun schema ->
+        let column_indexes =
+          Array.filter_mapi schema.fields ~f:(fun index field ->
+              if Hash_set.mem column_names field.A.name
+              then (
+                Hash_set.remove column_names field.A.name;
+                Some index)
+              else None)
+        in
+        if Hash_set.is_empty column_names
+        then A.get_record_reader_by_columns file_reader column_indexes batch_size
+        else
+          Error
+            (sprintf
+               "missing column names %s"
+               ([%sexp_of: String.Hash_set.t] column_names |> Sexp.to_string_mach))
+    in
+    record_reader >>= fun record_reader -> Ok { record_reader; file_reader }
 
   let next t =
-    match A.record_reader_next t with
+    match A.record_reader_next t.record_reader with
     | None -> `Eof
     | Some record_batch ->
       `Batch (Result.map record_batch ~f:Record_batch.of_record_batch)
+
+  let close t = A.record_reader_close t.record_reader
 end
 
 module Writer = struct
