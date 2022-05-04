@@ -11,8 +11,8 @@ let ok_exn = function
   | Ok ok -> ok
   | Error err -> failwith err
 
-let zone = ref Time_ns_unix.Zone.utc
-let set_default_zone z = zone := z
+let default_zone = ref Time_ns_unix.Zone.utc
+let set_default_zone z = default_zone := z
 
 module Data_type = struct
   type _ t =
@@ -81,37 +81,67 @@ module Column = struct
   let len t = A.array_len t.data
   let null_count t = A.array_null_count t.data
 
-  let of_array (type a) (data_type : a Data_type.t) (data : a array) =
-    let data =
-      match data_type with
-      | Int -> Array.map data ~f:Int64.of_int_exn |> A.array_i64_from
-      | Float -> A.array_f64_from data
-      | Date ->
-        Array.map data ~f:(fun d -> Date.(diff d unix_epoch) |> Int32.of_int_exn)
-        |> A.array_date32_from
-      | Time ->
-        let data =
-          Array.map data ~f:(fun ts ->
-              Time_ns.to_int_ns_since_epoch ts |> Int64.of_int_exn)
-        in
-        let zone = Time_ns_unix.Zone.to_string !zone in
-        A.array_timestamp_ns_from_with_zone data (Some zone)
-      | Ofday ->
+  module C = struct
+    let time data ~zone =
+      let data =
+        Array.map data ~f:(fun ts -> Time_ns.to_int_ns_since_epoch ts |> Int64.of_int_exn)
+      in
+      let zone = Time_ns_unix.Zone.to_string zone in
+      let data = A.array_timestamp_ns_from_with_zone data (Some zone) in
+      { data; data_type = Time }
+
+    let string data =
+      let data =
+        let sum_length = Array.sum (module Int) data ~f:String.length in
+        if sum_length > 2_000_000_000
+        then A.array_large_string_from data
+        else A.array_string_from data
+      in
+      { data; data_type = String }
+
+    let span data =
+      let data =
+        Array.map data ~f:(fun sp -> Time_ns.Span.to_int_ns sp |> Int64.of_int_exn)
+        |> A.array_duration_ns_from
+      in
+      { data; data_type = Span }
+
+    let ofday data =
+      let data =
         Array.map data ~f:(fun od ->
             Time_ns.Ofday.to_span_since_start_of_day od
             |> Time_ns.Span.to_int_ns
             |> Int64.of_int_exn)
         |> A.array_time64_ns_from
-      | Span ->
-        Array.map data ~f:(fun sp -> Time_ns.Span.to_int_ns sp |> Int64.of_int_exn)
-        |> A.array_duration_ns_from
-      | String ->
-        let sum_length = Array.sum (module Int) data ~f:String.length in
-        if sum_length > 2_000_000_000
-        then A.array_large_string_from data
-        else A.array_string_from data
-    in
-    { data_type; data }
+      in
+      { data; data_type = Ofday }
+
+    let date data =
+      let data =
+        Array.map data ~f:(fun d -> Date.(diff d unix_epoch) |> Int32.of_int_exn)
+        |> A.array_date32_from
+      in
+      { data; data_type = Date }
+
+    let int64 data =
+      { data = Array.map data ~f:Int64.of_int_exn |> A.array_i64_from; data_type = Int }
+
+    let int32 data =
+      { data = Array.map data ~f:Int32.of_int_exn |> A.array_i32_from; data_type = Int }
+
+    let float64 data = { data = A.array_f64_from data; data_type = Float }
+    let float32 data = { data = A.array_f32_from data; data_type = Float }
+  end
+
+  let of_array (type a) (data_type : a Data_type.t) (data : a array) =
+    match data_type with
+    | Int -> (C.int64 data : a t)
+    | Float -> C.float64 data
+    | Date -> C.date data
+    | Time -> C.time data ~zone:!default_zone
+    | Ofday -> C.ofday data
+    | Span -> C.span data
+    | String -> C.string data
 
   let time_unit_mult : A.time_unit -> int = function
     | Second -> 1_000_000_000

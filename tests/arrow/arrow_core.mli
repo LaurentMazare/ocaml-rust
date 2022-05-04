@@ -40,6 +40,18 @@ module Column : sig
   val data_type : 'a t -> 'a Data_type.t
   val len : _ t -> int
   val null_count : _ t -> int
+
+  (* Creation *)
+  module C : sig
+    val time : Time_ns.t array -> zone:Time_ns_unix.Zone.t -> Time_ns.t t
+    val date : Date.t array -> Date.t t
+    val span : Time_ns.Span.t array -> Time_ns.Span.t t
+    val ofday : Time_ns.Ofday.t array -> Time_ns.Ofday.t t
+    val int64 : int array -> int t
+    val int32 : int array -> int t
+    val float64 : float array -> float t
+    val float32 : float array -> float t
+  end
 end
 
 module Record_batch : sig
