@@ -239,13 +239,13 @@ module Record_batch = struct
   let read_parquet ?column_names filename =
     A.file_reader filename
     >>= fun file_reader ->
-    let metadata = A.parquet_metadata file_reader in
+    let metadata = A.file_reader_parquet_metadata file_reader |> ok_exn in
     let record_reader =
       match column_names with
       | None -> A.get_record_reader file_reader metadata.num_rows
       | Some column_names ->
         let column_names = String.Hash_set.of_list column_names in
-        A.schema file_reader
+        A.file_reader_schema file_reader
         >>= fun schema ->
         let column_indexes =
           Array.filter_mapi schema.fields ~f:(fun index field ->
@@ -300,7 +300,7 @@ module Reader = struct
       | None -> A.get_record_reader file_reader batch_size
       | Some column_names ->
         let column_names = String.Hash_set.of_list column_names in
-        A.schema file_reader
+        A.file_reader_schema file_reader
         >>= fun schema ->
         let column_indexes =
           Array.filter_mapi schema.fields ~f:(fun index field ->
@@ -326,7 +326,9 @@ module Reader = struct
     | Some record_batch ->
       `Batch (Result.map record_batch ~f:Record_batch.of_record_batch)
 
-  let close t = A.record_reader_close t.record_reader
+  let close t =
+    A.file_reader_close t.file_reader;
+    A.record_reader_close t.record_reader
 end
 
 module Writer = struct

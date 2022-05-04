@@ -14,10 +14,10 @@ let () =
   in
   let file_reader = Arrow.file_reader path |> ok_exn in
   Stdio.printf "File: %s\n%!" path;
-  Stdio.printf "%s\n%!" (Arrow.metadata_as_string file_reader);
-  let metadata = Arrow.parquet_metadata file_reader in
+  Stdio.printf "%s\n%!" (Arrow.file_reader_metadata_as_string file_reader |> ok_exn);
+  let metadata = Arrow.file_reader_parquet_metadata file_reader |> ok_exn in
   Stdio.printf "%s\n%!" (Arrow.sexp_of_metadata metadata |> Sexp.to_string_hum);
-  let schema = Arrow.schema file_reader |> ok_exn in
+  let schema = Arrow.file_reader_schema file_reader |> ok_exn in
   Stdio.printf "%s\n%!" (Arrow.sexp_of_schema schema |> Sexp.to_string_hum);
   let str_indexes =
     schema.fields

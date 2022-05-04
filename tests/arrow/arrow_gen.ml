@@ -76,19 +76,24 @@ open! Sexplib.Conv
     = "__ocaml_arrow_file_reader"
   ;;
 
-  external metadata_as_string
-    : file_reader -> string
-    = "__ocaml_arrow_metadata_as_string"
+  external file_reader_metadata_as_string
+    : file_reader -> (string, string) Result.t
+    = "__ocaml_arrow_file_reader_metadata_as_string"
   ;;
 
-  external parquet_metadata
-    : file_reader -> metadata
-    = "__ocaml_arrow_parquet_metadata"
+  external file_reader_parquet_metadata
+    : file_reader -> (metadata, string) Result.t
+    = "__ocaml_arrow_file_reader_parquet_metadata"
   ;;
 
-  external schema
+  external file_reader_schema
     : file_reader -> (schema, string) Result.t
-    = "__ocaml_arrow_schema"
+    = "__ocaml_arrow_file_reader_schema"
+  ;;
+
+  external file_reader_close
+    : file_reader -> unit
+    = "__ocaml_arrow_file_reader_close"
   ;;
 
   external get_record_reader

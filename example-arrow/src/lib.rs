@@ -31,16 +31,23 @@ fn file_reader(path: String) -> RustResult<FileReader> {
     let file_reader = SerializedFileReader::new(file)?;
     let file_reader = Arc::new(file_reader);
     let file_reader = ParquetFileArrowReader::new(file_reader);
-    Ok(Custom::new(file_reader))
+    Ok(Custom::new(Some(file_reader)))
 }
 
-fn metadata_as_string(reader: &FileReader) -> String {
+fn file_reader_close(reader: &FileReader) {
     let mut reader = reader.inner().lock().unwrap();
-    format!("{:?}", reader.get_metadata())
+    *reader = None
 }
 
-fn parquet_metadata(reader: &FileReader) -> Metadata {
+fn file_reader_metadata_as_string(reader: &FileReader) -> RustResult<String> {
     let mut reader = reader.inner().lock().unwrap();
+    let reader = reader.as_mut().map_or_else(|| Err("already closed"), |x| Ok(x))?;
+    Ok(format!("{:?}", reader.get_metadata()))
+}
+
+fn file_reader_parquet_metadata(reader: &FileReader) -> RustResult<Metadata> {
+    let mut reader = reader.inner().lock().unwrap();
+    let reader = reader.as_mut().map_or_else(|| Err("already closed"), |x| Ok(x))?;
     let metadata = reader.get_metadata();
     let f = metadata.file_metadata();
     let row_groups: Vec<_> = metadata
@@ -52,22 +59,25 @@ fn parquet_metadata(reader: &FileReader) -> Metadata {
             total_byte_size: r.total_byte_size() as isize,
         })
         .collect();
-    Metadata {
+    let metadata = Metadata {
         num_rows: f.num_rows() as isize,
         version: f.version() as isize,
         created_by: f.created_by().clone(),
         row_groups,
-    }
+    };
+    Ok(metadata)
 }
 
-fn schema(reader: &FileReader) -> RustResult<Schema> {
+fn file_reader_schema(reader: &FileReader) -> RustResult<Schema> {
     let mut reader = reader.inner().lock().unwrap();
+    let reader = reader.as_mut().map_or_else(|| Err("already closed"), |x| Ok(x))?;
     let schema = reader.get_schema()?;
     Ok(Schema::of_arrow(&schema))
 }
 
 fn get_record_reader(reader: &FileReader, batch_size: usize) -> RustResult<RecordReader> {
     let mut reader = reader.inner().lock().unwrap();
+    let reader = reader.as_mut().map_or_else(|| Err("already closed"), |x| Ok(x))?;
     Ok(Custom::new(Some(reader.get_record_reader(batch_size)?)))
 }
 
@@ -77,6 +87,7 @@ fn get_record_reader_by_columns(
     batch_size: usize,
 ) -> RustResult<RecordReader> {
     let mut reader = reader.inner().lock().unwrap();
+    let reader = reader.as_mut().map_or_else(|| Err("already closed"), |x| Ok(x))?;
     let reader = reader.get_record_reader_by_columns(columns.into_iter(), batch_size)?;
     Ok(Custom::new(Some(reader)))
 }
@@ -424,7 +435,7 @@ impl DataType {
 #[ocaml_rust::bridge]
 mod arrow {
     ocaml_include!("open! Sexplib.Conv");
-    type FileReader = Custom<ParquetFileArrowReader>;
+    type FileReader = Custom<Option<ParquetFileArrowReader>>;
     type FileWriter = Custom<ArrowWriter<std::fs::File>>;
     type RecordReader = Custom<Option<ParquetRecordBatchReader>>;
     type RecordBatch = CustomConst<ArrowRecordBatch>;
@@ -520,9 +531,10 @@ mod arrow {
     extern "Rust" {
         // TODO: provide better scoping/module.
         fn file_reader(path: String) -> RustResult<FileReader>;
-        fn metadata_as_string(reader: &FileReader) -> String;
-        fn parquet_metadata(reader: &FileReader) -> Metadata;
-        fn schema(reader: &FileReader) -> RustResult<Schema>;
+        fn file_reader_metadata_as_string(reader: &FileReader) -> RustResult<String>;
+        fn file_reader_parquet_metadata(reader: &FileReader) -> RustResult<Metadata>;
+        fn file_reader_schema(reader: &FileReader) -> RustResult<Schema>;
+        fn file_reader_close(reader: &FileReader);
         fn get_record_reader(reader: &FileReader, batch_size: usize) -> RustResult<RecordReader>;
         fn get_record_reader_by_columns(
             reader: &FileReader,
