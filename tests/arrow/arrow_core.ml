@@ -27,16 +27,18 @@ module Data_type = struct
 
   let sexp_of t = sexp_of_t (fun _ -> Sexp.List []) t
 
-  let equal (type a b) (t1 : a t) (t2 : b t) =
+  let equal_ (type a b) (t1 : a t) (t2 : b t) : (a, b) Type_equal.t option =
     match t1, t2 with
-    | Int, Int
-    | Float, Float
-    | Date, Date
-    | Time, Time
-    | Ofday, Ofday
-    | Span, Span
-    | String, String -> true
-    | _ -> false
+    | Int, Int -> Some T
+    | Float, Float -> Some T
+    | Date, Date -> Some T
+    | Time, Time -> Some T
+    | Ofday, Ofday -> Some T
+    | Span, Span -> Some T
+    | String, String -> Some T
+    | _ -> None
+
+  let equal (type a b) (t1 : a t) (t2 : b t) = equal_ t1 t2 |> Option.is_some
 end
 
 module Column = struct
@@ -48,26 +50,14 @@ module Column = struct
   type packed = P : _ t -> packed
 
   let extract (type a) (P t) (data_type : a Data_type.t) : a t option =
-    match t.data_type, data_type with
-    | Int, Int -> Some (t : a t)
-    | Float, Float -> Some (t : a t)
-    | Date, Date -> Some (t : a t)
-    | Time, Time -> Some (t : a t)
-    | Ofday, Ofday -> Some (t : a t)
-    | Span, Span -> Some (t : a t)
-    | String, String -> Some (t : a t)
-    | _ -> None
+    match Data_type.equal_ t.data_type data_type with
+    | Some T -> Some (t : a t)
+    | None -> None
 
   let extract_exn (type a) (P t) (data_type : a Data_type.t) : a t =
-    match t.data_type, data_type with
-    | Int, Int -> (t : a t)
-    | Float, Float -> (t : a t)
-    | Date, Date -> (t : a t)
-    | Time, Time -> (t : a t)
-    | Ofday, Ofday -> (t : a t)
-    | Span, Span -> (t : a t)
-    | String, String -> (t : a t)
-    | _ ->
+    match Data_type.equal_ t.data_type data_type with
+    | Some T -> (t : a t)
+    | None ->
       [%message
         "data-type mismatch"
           ~expected:(Data_type.sexp_of data_type : Sexp.t)
