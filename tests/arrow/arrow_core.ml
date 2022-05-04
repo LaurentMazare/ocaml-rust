@@ -24,6 +24,19 @@ module Data_type = struct
     | Span : Time_ns.Span.t t
     | String : string t
   [@@deriving sexp_of]
+
+  let sexp_of t = sexp_of_t (fun _ -> Sexp.List []) t
+
+  let equal (type a b) (t1 : a t) (t2 : b t) =
+    match t1, t2 with
+    | Int, Int
+    | Float, Float
+    | Date, Date
+    | Time, Time
+    | Ofday, Ofday
+    | Span, Span
+    | String, String -> true
+    | _ -> false
 end
 
 module Column = struct
@@ -33,6 +46,33 @@ module Column = struct
     }
 
   type packed = P : _ t -> packed
+
+  let extract (type a) (P t) (data_type : a Data_type.t) : a t option =
+    match t.data_type, data_type with
+    | Int, Int -> Some (t : a t)
+    | Float, Float -> Some (t : a t)
+    | Date, Date -> Some (t : a t)
+    | Time, Time -> Some (t : a t)
+    | Ofday, Ofday -> Some (t : a t)
+    | Span, Span -> Some (t : a t)
+    | String, String -> Some (t : a t)
+    | _ -> None
+
+  let extract_exn (type a) (P t) (data_type : a Data_type.t) : a t =
+    match t.data_type, data_type with
+    | Int, Int -> (t : a t)
+    | Float, Float -> (t : a t)
+    | Date, Date -> (t : a t)
+    | Time, Time -> (t : a t)
+    | Ofday, Ofday -> (t : a t)
+    | Span, Span -> (t : a t)
+    | String, String -> (t : a t)
+    | _ ->
+      [%message
+        "data-type mismatch"
+          ~expected:(Data_type.sexp_of data_type : Sexp.t)
+          ~got:(Data_type.sexp_of t.data_type : Sexp.t)]
+      |> raise_s
 
   let data t = t.data
 

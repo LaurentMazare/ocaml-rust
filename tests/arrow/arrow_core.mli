@@ -17,11 +17,16 @@ module Data_type : sig
     | Span : Time_ns.Span.t t
     | String : string t
   [@@deriving sexp_of]
+
+  val equal : _ t -> _ t -> bool
 end
 
 module Column : sig
   type _ t
   type packed = P : _ t -> packed [@@deriving sexp_of]
+
+  val extract : packed -> 'a Data_type.t -> 'a t option
+  val extract_exn : packed -> 'a Data_type.t -> 'a t
 
   (* Conversion from/to OCaml data *)
   val of_array : 'a Data_type.t -> 'a array -> 'a t
