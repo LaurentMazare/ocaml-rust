@@ -61,8 +61,14 @@ module Record_batch : sig
   val debug_string : t -> string
   val schema : t -> A.schema
   val concat : t list -> t result
+  val mem : t -> string -> bool
+  val column : t -> string -> Column.packed
 
   (* Parquet read/write. *)
   val write_parquet : t -> string -> unit result
   val read_parquet : ?column_names:string list -> string -> t result
+
+  (* [record_batch] conversion. *)
+  val of_record_batch : A.record_batch -> t
+  val record_batch : t -> A.record_batch
 end

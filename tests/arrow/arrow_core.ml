@@ -203,16 +203,37 @@ module Column = struct
 end
 
 module Record_batch = struct
-  type t = A.record_batch
+  type t =
+    { data : A.record_batch
+    ; schema : A.schema
+    ; column_indexes : int String.Map.t
+    }
+
+  let of_record_batch data =
+    let schema = A.record_batch_schema data in
+    let column_indexes =
+      Array.to_list schema.fields
+      |> List.mapi ~f:(fun index field -> field.A.name, index)
+      |> String.Map.of_alist_exn
+    in
+    { data; schema; column_indexes }
+
+  let record_batch t = t.data
 
   let create columns =
     Array.of_list_map columns ~f:(fun (name, Column.P column) -> name, column.data)
     |> A.record_batch_create
+    |> Result.map ~f:of_record_batch
 
-  let debug_string = A.record_batch_debug
-  let schema = A.record_batch_schema
-  let concat ts = Array.of_list ts |> A.record_batch_concat
-  let write_parquet t filename = A.record_batch_write_parquet t filename
+  let debug_string t = A.record_batch_debug t.data
+  let schema t = t.schema
+
+  let concat ts =
+    Array.of_list_map ts ~f:(fun t -> t.data)
+    |> A.record_batch_concat
+    |> Result.map ~f:of_record_batch
+
+  let write_parquet t filename = A.record_batch_write_parquet t.data filename
 
   let read_parquet ?column_names filename =
     let open Result.Monad_infix in
@@ -250,5 +271,17 @@ module Record_batch = struct
       | Some (Error _ as err) -> err
       | Some (Ok ok) -> loop (ok :: acc)
     in
-    loop []
+    loop [] |> Result.map ~f:of_record_batch
+
+  let mem t column_name = Map.mem t.column_indexes column_name
+
+  let column t column_name =
+    match Map.find t.column_indexes column_name with
+    | Some index -> A.record_batch_column t.data index |> Column.of_data
+    | None ->
+      [%message
+        "unable to find column"
+          (column_name : string)
+          ~existing_columns:(Map.keys t.column_indexes : string list)]
+      |> raise_s
 end
