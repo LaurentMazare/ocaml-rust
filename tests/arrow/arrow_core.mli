@@ -1,6 +1,14 @@
 open! Core
 module A = Arrow_gen.Arrow
 
+module Schema : sig
+  module Field : sig
+    type t = A.schema_field [@@deriving sexp]
+  end
+
+  type t = A.schema [@@deriving sexp]
+end
+
 val set_default_zone : Time_ns_unix.Zone.t -> unit
 
 type 'a result = ('a, string) Result.t
@@ -59,10 +67,13 @@ module Record_batch : sig
 
   val create : (string * Column.packed) list -> t result
   val debug_string : t -> string
-  val schema : t -> A.schema
+  val schema : t -> Schema.t
   val concat : t list -> t result
   val mem : t -> string -> bool
+  val columns : t -> (string * Column.packed) list
   val column : t -> string -> Column.packed
+  val num_rows : t -> int
+  val num_columns : t -> int
 
   (* Parquet read/write. *)
   val write_parquet : t -> string -> unit result
@@ -77,8 +88,16 @@ module Reader : sig
   type t
 
   val create : ?column_names:string list -> string -> batch_size:int -> t result
+  val schema : t -> Schema.t result
   val next : t -> [ `Eof | `Batch of Record_batch.t result ]
   val close : t -> unit
+
+  val with_reader
+    :  ?column_names:string list
+    -> string
+    -> batch_size:int
+    -> f:(t -> 'a)
+    -> 'a result
 end
 
 module Writer : sig
@@ -87,4 +106,5 @@ module Writer : sig
   val create : string -> t
   val append : t -> Record_batch.t -> unit result
   val close : t -> unit result
+  val with_writer : string -> f:(t -> 'a) -> 'a result
 end

@@ -292,52 +292,52 @@ open! Sexplib.Conv
   ;;
 
   external array_duration_ns_values
-    : array_ref -> Int64.t array option
+    : array_ref -> Int64.t -> Int64.t array option
     = "__ocaml_arrow_array_duration_ns_values"
   ;;
 
   external array_time64_ns_values
-    : array_ref -> Int64.t array option
+    : array_ref -> Int64.t -> Int64.t array option
     = "__ocaml_arrow_array_time64_ns_values"
   ;;
 
   external array_timestamp_ns_values
-    : array_ref -> Int64.t array option
+    : array_ref -> Int64.t -> Int64.t array option
     = "__ocaml_arrow_array_timestamp_ns_values"
   ;;
 
   external array_date32_values
-    : array_ref -> Int32.t array option
+    : array_ref -> Int32.t -> Int32.t array option
     = "__ocaml_arrow_array_date32_values"
   ;;
 
   external array_date64_values
-    : array_ref -> Int64.t array option
+    : array_ref -> Int64.t -> Int64.t array option
     = "__ocaml_arrow_array_date64_values"
   ;;
 
   external array_char_values
-    : array_ref -> char array option
+    : array_ref -> char -> char array option
     = "__ocaml_arrow_array_char_values"
   ;;
 
   external array_i32_values
-    : array_ref -> Int32.t array option
+    : array_ref -> Int32.t -> Int32.t array option
     = "__ocaml_arrow_array_i32_values"
   ;;
 
   external array_i64_values
-    : array_ref -> Int64.t array option
+    : array_ref -> Int64.t -> Int64.t array option
     = "__ocaml_arrow_array_i64_values"
   ;;
 
   external array_f32_values
-    : array_ref -> float array option
+    : array_ref -> float -> float array option
     = "__ocaml_arrow_array_f32_values"
   ;;
 
   external array_f64_values
-    : array_ref -> float array option
+    : array_ref -> float -> float array option
     = "__ocaml_arrow_array_f64_values"
   ;;
 

@@ -1,5 +1,5 @@
 // TODO: Improve handling of null values.
-use arrow::array::{ArrayRef as ArrowArrayRef, TimestampNanosecondArray};
+use arrow::array::{Array, ArrayRef as ArrowArrayRef, TimestampNanosecondArray};
 use arrow::datatypes::DataType as DT;
 use arrow::record_batch::RecordBatch as ArrowRecordBatch;
 use ocaml_rust::{BigArray1, Custom, CustomConst, RustResult};
@@ -41,13 +41,13 @@ fn file_reader_close(reader: &FileReader) {
 
 fn file_reader_metadata_as_string(reader: &FileReader) -> RustResult<String> {
     let mut reader = reader.inner().lock().unwrap();
-    let reader = reader.as_mut().map_or_else(|| Err("already closed"), |x| Ok(x))?;
+    let reader = reader.as_mut().map_or_else(|| Err("already closed"), Ok)?;
     Ok(format!("{:?}", reader.get_metadata()))
 }
 
 fn file_reader_parquet_metadata(reader: &FileReader) -> RustResult<Metadata> {
     let mut reader = reader.inner().lock().unwrap();
-    let reader = reader.as_mut().map_or_else(|| Err("already closed"), |x| Ok(x))?;
+    let reader = reader.as_mut().map_or_else(|| Err("already closed"), Ok)?;
     let metadata = reader.get_metadata();
     let f = metadata.file_metadata();
     let row_groups: Vec<_> = metadata
@@ -70,14 +70,14 @@ fn file_reader_parquet_metadata(reader: &FileReader) -> RustResult<Metadata> {
 
 fn file_reader_schema(reader: &FileReader) -> RustResult<Schema> {
     let mut reader = reader.inner().lock().unwrap();
-    let reader = reader.as_mut().map_or_else(|| Err("already closed"), |x| Ok(x))?;
+    let reader = reader.as_mut().map_or_else(|| Err("already closed"), Ok)?;
     let schema = reader.get_schema()?;
     Ok(Schema::of_arrow(&schema))
 }
 
 fn get_record_reader(reader: &FileReader, batch_size: usize) -> RustResult<RecordReader> {
     let mut reader = reader.inner().lock().unwrap();
-    let reader = reader.as_mut().map_or_else(|| Err("already closed"), |x| Ok(x))?;
+    let reader = reader.as_mut().map_or_else(|| Err("already closed"), Ok)?;
     Ok(Custom::new(Some(reader.get_record_reader(batch_size)?)))
 }
 
@@ -87,7 +87,7 @@ fn get_record_reader_by_columns(
     batch_size: usize,
 ) -> RustResult<RecordReader> {
     let mut reader = reader.inner().lock().unwrap();
-    let reader = reader.as_mut().map_or_else(|| Err("already closed"), |x| Ok(x))?;
+    let reader = reader.as_mut().map_or_else(|| Err("already closed"), Ok)?;
     let reader = reader.get_record_reader_by_columns(columns.into_iter(), batch_size)?;
     Ok(Custom::new(Some(reader)))
 }
@@ -240,9 +240,19 @@ macro_rules! value_fns {
             CustomConst::new(Arc::new(array))
         }
 
-        fn $value_fn(array: &ArrayRef) -> Option<Vec<$typ>> {
+        fn $value_fn(array: &ArrayRef, default: $typ) -> Option<Vec<$typ>> {
             let array = array.inner();
-            array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| x.values().to_vec())
+            array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| {
+                let mut vec = x.values().to_vec();
+                if x.null_count() > 0 {
+                    for (i, v) in vec.iter_mut().enumerate() {
+                        if x.is_null(i) {
+                            *v = default
+                        }
+                    }
+                }
+                vec
+            })
         }
 
         fn $value_fn_ba(array: &ArrayRef) -> Option<BigArray1<$typ>> {
@@ -589,16 +599,16 @@ mod arrow {
         fn array_f32_from(v: Vec<f32>) -> ArrayRef;
         fn array_f64_from(v: Vec<f64>) -> ArrayRef;
 
-        fn array_duration_ns_values(array: &ArrayRef) -> Option<Vec<i64>>;
-        fn array_time64_ns_values(array: &ArrayRef) -> Option<Vec<i64>>;
-        fn array_timestamp_ns_values(array: &ArrayRef) -> Option<Vec<i64>>;
-        fn array_date32_values(array: &ArrayRef) -> Option<Vec<i32>>;
-        fn array_date64_values(array: &ArrayRef) -> Option<Vec<i64>>;
-        fn array_char_values(array: &ArrayRef) -> Option<Vec<u8>>;
-        fn array_i32_values(array: &ArrayRef) -> Option<Vec<i32>>;
-        fn array_i64_values(array: &ArrayRef) -> Option<Vec<i64>>;
-        fn array_f32_values(array: &ArrayRef) -> Option<Vec<f32>>;
-        fn array_f64_values(array: &ArrayRef) -> Option<Vec<f64>>;
+        fn array_duration_ns_values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        fn array_time64_ns_values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        fn array_timestamp_ns_values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        fn array_date32_values(array: &ArrayRef, default: i32) -> Option<Vec<i32>>;
+        fn array_date64_values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        fn array_char_values(array: &ArrayRef, default: u8) -> Option<Vec<u8>>;
+        fn array_i32_values(array: &ArrayRef, default: i32) -> Option<Vec<i32>>;
+        fn array_i64_values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        fn array_f32_values(array: &ArrayRef, default: f32) -> Option<Vec<f32>>;
+        fn array_f64_values(array: &ArrayRef, default: f64) -> Option<Vec<f64>>;
 
         fn array_duration_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
         fn array_time64_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;

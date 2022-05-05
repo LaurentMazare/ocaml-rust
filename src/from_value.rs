@@ -8,6 +8,12 @@ pub trait FromValue: Sized {
     fn from_value(v: &Value<Self>) -> Self;
 }
 
+impl FromSysValue for u8 {
+    unsafe fn from_value(v: ocaml_sys::Value) -> Self {
+        ocaml_sys::int_val(v) as u8
+    }
+}
+
 impl FromSysValue for isize {
     unsafe fn from_value(v: ocaml_sys::Value) -> Self {
         ocaml_sys::int_val(v)

@@ -84,12 +84,12 @@ let%expect_test _ =
   in
   [%expect
     {| failed as expected, panicked at 'index out of bounds: the len is 3 but the index is 123' |}];
-  let column = Arrow.record_batch_column rb 0 |> Arrow.array_i64_values in
+  let column = (Arrow.record_batch_column rb 0 |> Arrow.array_i64_values) Int64.zero in
   Stdio.printf "%s\n%!" ([%sexp_of: Int64.t array option] column |> Sexp.to_string_mach);
   [%expect {| () |}];
-  let column = Arrow.record_batch_column rb 0 |> Arrow.array_f64_values in
+  let column = (Arrow.record_batch_column rb 0 |> Arrow.array_f64_values) Float.nan in
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
-  let column = Arrow.record_batch_column rb 1 |> Arrow.array_f64_values in
+  let column = (Arrow.record_batch_column rb 1 |> Arrow.array_f64_values) Float.nan in
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
   let column = Arrow.record_batch_column rb 2 |> Arrow.array_string_values in
   Stdio.printf
@@ -126,15 +126,16 @@ let%expect_test _ =
        ((name foo_ba) (data_type Float64) (nullable false))
        ((name bar) (data_type Utf8) (nullable false))))
      (metadata ())) |}];
-  let column = Arrow.record_batch_column rb 0 |> Arrow.array_f64_values in
+  let column = (Arrow.record_batch_column rb 0 |> Arrow.array_f64_values) Float.nan in
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
-  let column = Arrow.record_batch_column rb 1 |> Arrow.array_f64_values in
+  let column = (Arrow.record_batch_column rb 1 |> Arrow.array_f64_values) Float.nan in
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
   let column = Arrow.record_batch_column rb 2 |> Arrow.array_string_values in
   Stdio.printf
     "%s\n%!"
     ([%sexp_of: string option array option] column |> Sexp.to_string_mach);
-  [%expect {|
+  [%expect
+    {|
     ((0 1 1.4142135623730951 1.7320508075688772 2))
     ((1 0.5 0.33333333333333331 0.25 0.2))
     (((b<0>)(b<1>)(b<2>)(b<3>)(b<4>))) |}]

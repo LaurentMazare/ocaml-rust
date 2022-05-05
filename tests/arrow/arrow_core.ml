@@ -15,6 +15,20 @@ let ok_exn = function
 let default_zone = ref Time_ns_unix.Zone.utc
 let set_default_zone z = default_zone := z
 
+module Schema = struct
+  module Field = struct
+    type t = A.schema_field
+
+    let sexp_of_t = A.sexp_of_schema_field
+    let t_of_sexp = A.schema_field_of_sexp
+  end
+
+  type t = A.schema
+
+  let sexp_of_t = A.sexp_of_schema
+  let t_of_sexp = A.schema_of_sexp
+end
+
 module Data_type = struct
   type _ t =
     | Int : int t
@@ -154,35 +168,37 @@ module Column = struct
     let res : a array =
       match A.array_data_type t.data, t.data_type with
       | Int32, Int ->
-        Option.value_exn (A.array_i32_values t.data) |> Array.map ~f:Int32.to_int_exn
+        Option.value_exn (A.array_i32_values t.data Int32.zero)
+        |> Array.map ~f:Int32.to_int_exn
       | Int64, Int ->
-        Option.value_exn (A.array_i64_values t.data) |> Array.map ~f:Int64.to_int_exn
-      | Float32, Float -> Option.value_exn (A.array_f32_values t.data)
-      | Float64, Float -> Option.value_exn (A.array_f64_values t.data)
+        Option.value_exn (A.array_i64_values t.data Int64.zero)
+        |> Array.map ~f:Int64.to_int_exn
+      | Float32, Float -> Option.value_exn (A.array_f32_values t.data Float.nan)
+      | Float64, Float -> Option.value_exn (A.array_f64_values t.data Float.nan)
       | Utf8, String ->
         Option.value_exn (A.array_string_values t.data)
-        |> Array.map ~f:(fun v -> Option.value_exn v)
+        |> Array.map ~f:(fun v -> Option.value v ~default:"")
       | LargeUtf8, String ->
         Option.value_exn (A.array_large_string_values t.data)
-        |> Array.map ~f:(fun v -> Option.value_exn v)
+        |> Array.map ~f:(fun v -> Option.value v ~default:"")
       | Date32, Date ->
-        Option.value_exn (A.array_date32_values t.data)
+        Option.value_exn (A.array_date32_values t.data Int32.zero)
         |> Array.map ~f:(fun d -> Int32.to_int_exn d |> Date.(add_days unix_epoch))
       | Time64 time_unit, Ofday ->
         let time_unit_mult = time_unit_mult time_unit in
-        Option.value_exn (A.array_time64_ns_values t.data)
+        Option.value_exn (A.array_time64_ns_values t.data Int64.zero)
         |> Array.map ~f:(fun d ->
                Int64.to_int_exn d * time_unit_mult
                |> Time_ns.Span.of_int_ns
                |> Time_ns.Ofday.of_span_since_start_of_day_exn)
       | Duration time_unit, Span ->
         let time_unit_mult = time_unit_mult time_unit in
-        Option.value_exn (A.array_time64_ns_values t.data)
+        Option.value_exn (A.array_time64_ns_values t.data Int64.zero)
         |> Array.map ~f:(fun d ->
                Int64.to_int_exn d * time_unit_mult |> Time_ns.Span.of_int_ns)
       | Timestamp (time_unit, _zone), Time ->
         let time_unit_mult = time_unit_mult time_unit in
-        Option.value_exn (A.array_timestamp_ns_values t.data)
+        Option.value_exn (A.array_timestamp_ns_values t.data Int64.zero)
         |> Array.map ~f:(fun ts ->
                Int64.to_int_exn ts * time_unit_mult |> Time_ns.of_int_ns_since_epoch)
       | data_type, _data_type ->
@@ -220,6 +236,8 @@ module Record_batch = struct
     { data; schema; column_indexes }
 
   let record_batch t = t.data
+  let num_rows t = A.record_batch_num_rows t.data
+  let num_columns t = A.record_batch_num_columns t.data
 
   let create columns =
     Array.of_list_map columns ~f:(fun (name, Column.P column) -> name, column.data)
@@ -284,6 +302,11 @@ module Record_batch = struct
           (column_name : string)
           ~existing_columns:(Map.keys t.column_indexes : string list)]
       |> raise_s
+
+  let columns t =
+    Array.to_list t.schema.fields
+    |> List.mapi ~f:(fun index field ->
+           field.A.name, A.record_batch_column t.data index |> Column.of_data)
 end
 
 module Reader = struct
@@ -320,6 +343,8 @@ module Reader = struct
     in
     record_reader >>= fun record_reader -> Ok { record_reader; file_reader }
 
+  let schema t = A.file_reader_schema t.file_reader
+
   let next t =
     match A.record_reader_next t.record_reader with
     | None -> `Eof
@@ -329,6 +354,10 @@ module Reader = struct
   let close t =
     A.file_reader_close t.file_reader;
     A.record_reader_close t.record_reader
+
+  let with_reader ?column_names filename ~batch_size ~f =
+    create ?column_names filename ~batch_size
+    >>= fun t -> Exn.protect ~f:(fun () -> Ok (f t)) ~finally:(fun () -> close t)
 end
 
 module Writer = struct
@@ -359,4 +388,8 @@ module Writer = struct
     | Writer writer -> A.writer_close writer
     | Not_initialized | Closed -> Ok ())
     >>| fun () -> t.writer <- Closed
+
+  let with_writer filename ~f =
+    let t = create filename in
+    Exn.protect ~f:(fun () -> Ok (f t)) ~finally:(fun () -> ignore (close t : _ Result.t))
 end
