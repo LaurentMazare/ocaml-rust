@@ -168,7 +168,8 @@ let read_and_print path ~batch_size =
 
 let%expect_test _ =
   read_and_print "test.parquet" ~batch_size:4096;
-  [%expect {|
+  [%expect
+    {|
     ((fields
       (((name x) (data_type Float64) (nullable true))
        ((name y) (data_type Utf8) (nullable true))
@@ -177,6 +178,29 @@ let%expect_test _ =
       ((pandas
         "{\"index_columns\": [], \"column_indexes\": [], \"columns\": [{\"name\": \"x\", \"field_name\": \"x\", \"pandas_type\": \"float64\", \"numpy_type\": \"float64\", \"metadata\": null}, {\"name\": \"y\", \"field_name\": \"y\", \"pandas_type\": \"unicode\", \"numpy_type\": \"object\", \"metadata\": null}, {\"name\": \"z\", \"field_name\": \"z\", \"pandas_type\": \"float64\", \"numpy_type\": \"float64\", \"metadata\": null}], \"creator\": {\"library\": \"pyarrow\", \"version\": \"4.0.1\"}, \"pandas_version\": \"1.0.5\"}"))))
       batch 1: 2 rows, 3 columns
+        x: (3.1415 NAN)
+        y: (foobar"")
+        z: (NAN 12)
+    done |}];
+  let rb = A.Record_batch.read_parquet "test.parquet" |> ok_exn in
+  let rb = A.Record_batch.concat [ rb; rb; rb; rb ] |> ok_exn in
+  A.Record_batch.write_parquet rb "tmp-test.parquet" |> ok_exn;
+  read_and_print "tmp-test.parquet" ~batch_size:3;
+  [%expect {|
+    ((fields
+      (((name x) (data_type Float64) (nullable true))
+       ((name y) (data_type Utf8) (nullable true))
+       ((name z) (data_type Float64) (nullable true))))
+     (metadata ()))
+      batch 1: 3 rows, 3 columns
+        x: (3.1415 NAN 3.1415)
+        y: (foobar""foobar)
+        z: (NAN 12 NAN)
+      batch 2: 3 rows, 3 columns
+        x: (NAN 3.1415 NAN)
+        y: (""foobar"")
+        z: (12 NAN 12)
+      batch 3: 2 rows, 3 columns
         x: (3.1415 NAN)
         y: (foobar"")
         z: (NAN 12)

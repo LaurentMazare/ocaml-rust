@@ -1,4 +1,3 @@
-// TODO: Improve handling of null values.
 use arrow::array::{Array, ArrayRef as ArrowArrayRef, TimestampNanosecondArray};
 use arrow::datatypes::DataType as DT;
 use arrow::record_batch::RecordBatch as ArrowRecordBatch;
@@ -229,7 +228,7 @@ fn array_null_count(array: &ArrayRef) -> usize {
 }
 
 macro_rules! value_fns {
-    ($from_fn: ident, $from_fn_ba: ident, $value_fn: ident, $value_fn_ba: ident, $typ: ident, $array_typ: ident) => {
+    ($from_fn: ident, $from_fn_ba: ident, $value_fn: ident, $value_fn_opt: ident, $value_fn_ba: ident, $typ: ident, $array_typ: ident) => {
         fn $from_fn(array: Vec<$typ>) -> ArrayRef {
             let array = arrow::array::$array_typ::from_iter_values(array.into_iter());
             CustomConst::new(Arc::new(array))
@@ -243,15 +242,31 @@ macro_rules! value_fns {
         fn $value_fn(array: &ArrayRef, default: $typ) -> Option<Vec<$typ>> {
             let array = array.inner();
             array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| {
-                let mut vec = x.values().to_vec();
                 if x.null_count() > 0 {
-                    for (i, v) in vec.iter_mut().enumerate() {
-                        if x.is_null(i) {
-                            *v = default
-                        }
-                    }
+                    x.values()
+                        .iter()
+                        .enumerate()
+                        .map(|(i, v)| if x.is_null(i) { default } else { *v })
+                        .collect::<Vec<_>>()
+                } else {
+                    x.values().to_vec()
                 }
-                vec
+            })
+        }
+
+        #[allow(dead_code)]
+        fn $value_fn_opt(array: &ArrayRef) -> Option<Vec<Option<$typ>>> {
+            let array = array.inner();
+            array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| {
+                if x.null_count() > 0 {
+                    x.values()
+                        .iter()
+                        .enumerate()
+                        .map(|(i, v)| if x.is_null(i) { None } else { Some(*v) })
+                        .collect::<Vec<_>>()
+                } else {
+                    x.values().iter().map(|v| Some(*v)).collect()
+                }
             })
         }
 
@@ -269,6 +284,7 @@ value_fns!(
     array_duration_ns_from,
     array_duration_ns_from_ba,
     array_duration_ns_values,
+    array_duration_ns_values_opt,
     array_duration_ns_values_ba,
     i64,
     DurationNanosecondArray
@@ -277,6 +293,7 @@ value_fns!(
     array_time64_ns_from,
     array_time64_ns_from_ba,
     array_time64_ns_values,
+    array_time64_ns_values_opt,
     array_time64_ns_values_ba,
     i64,
     Time64NanosecondArray
@@ -285,6 +302,7 @@ value_fns!(
     array_timestamp_ns_from,
     array_timestamp_ns_from_ba,
     array_timestamp_ns_values,
+    array_timestamp_ns_values_opt,
     array_timestamp_ns_values_ba,
     i64,
     TimestampNanosecondArray
@@ -293,6 +311,7 @@ value_fns!(
     array_date32_from,
     array_date32_from_ba,
     array_date32_values,
+    array_date32_values_opt,
     array_date32_values_ba,
     i32,
     Date32Array
@@ -301,6 +320,7 @@ value_fns!(
     array_date64_from,
     array_date64_from_ba,
     array_date64_values,
+    array_date64_values_opt,
     array_date64_values_ba,
     i64,
     Date64Array
@@ -309,6 +329,7 @@ value_fns!(
     array_char_from,
     array_char_from_ba,
     array_char_values,
+    array_char_values_opt,
     array_char_values_ba,
     u8,
     UInt8Array
@@ -317,6 +338,7 @@ value_fns!(
     array_i32_from,
     array_i32_from_ba,
     array_i32_values,
+    array_i32_values_opt,
     array_i32_values_ba,
     i32,
     Int32Array
@@ -325,6 +347,7 @@ value_fns!(
     array_i64_from,
     array_i64_from_ba,
     array_i64_values,
+    array_i64_values_opt,
     array_i64_values_ba,
     i64,
     Int64Array
@@ -333,6 +356,7 @@ value_fns!(
     array_f32_from,
     array_f32_from_ba,
     array_f32_values,
+    array_f32_values_opt,
     array_f32_values_ba,
     f32,
     Float32Array
@@ -341,6 +365,7 @@ value_fns!(
     array_f64_from,
     array_f64_from_ba,
     array_f64_values,
+    array_f64_values_opt,
     array_f64_values_ba,
     f64,
     Float64Array
@@ -609,6 +634,16 @@ mod arrow {
         fn array_i64_values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
         fn array_f32_values(array: &ArrayRef, default: f32) -> Option<Vec<f32>>;
         fn array_f64_values(array: &ArrayRef, default: f64) -> Option<Vec<f64>>;
+
+        fn array_duration_ns_values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        fn array_time64_ns_values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        fn array_timestamp_ns_values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        fn array_date32_values_opt(array: &ArrayRef) -> Option<Vec<Option<i32>>>;
+        fn array_date64_values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        fn array_i32_values_opt(array: &ArrayRef) -> Option<Vec<Option<i32>>>;
+        fn array_i64_values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        fn array_f32_values_opt(array: &ArrayRef) -> Option<Vec<Option<f32>>>;
+        fn array_f64_values_opt(array: &ArrayRef) -> Option<Vec<Option<f64>>>;
 
         fn array_duration_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
         fn array_time64_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;

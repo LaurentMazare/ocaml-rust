@@ -42,10 +42,11 @@ module Column : sig
   (* [to_array ~default t] uses [default] for null values from the
      Arrow array. *)
   val to_array : ?default:'a -> 'a t -> 'a array
+  val to_array_opt : 'a t -> 'a option array
 
   (* array_ref conversion *)
-  val data : _ t -> A.array_ref
-  val of_data : A.array_ref -> packed
+  val array_ref : _ t -> A.array_ref
+  val of_array_ref : A.array_ref -> packed
 
   (* Accessors *)
   val data_type : 'a t -> 'a Data_type.t

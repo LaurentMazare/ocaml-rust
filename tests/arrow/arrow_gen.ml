@@ -341,6 +341,51 @@ open! Sexplib.Conv
     = "__ocaml_arrow_array_f64_values"
   ;;
 
+  external array_duration_ns_values_opt
+    : array_ref -> Int64.t option array option
+    = "__ocaml_arrow_array_duration_ns_values_opt"
+  ;;
+
+  external array_time64_ns_values_opt
+    : array_ref -> Int64.t option array option
+    = "__ocaml_arrow_array_time64_ns_values_opt"
+  ;;
+
+  external array_timestamp_ns_values_opt
+    : array_ref -> Int64.t option array option
+    = "__ocaml_arrow_array_timestamp_ns_values_opt"
+  ;;
+
+  external array_date32_values_opt
+    : array_ref -> Int32.t option array option
+    = "__ocaml_arrow_array_date32_values_opt"
+  ;;
+
+  external array_date64_values_opt
+    : array_ref -> Int64.t option array option
+    = "__ocaml_arrow_array_date64_values_opt"
+  ;;
+
+  external array_i32_values_opt
+    : array_ref -> Int32.t option array option
+    = "__ocaml_arrow_array_i32_values_opt"
+  ;;
+
+  external array_i64_values_opt
+    : array_ref -> Int64.t option array option
+    = "__ocaml_arrow_array_i64_values_opt"
+  ;;
+
+  external array_f32_values_opt
+    : array_ref -> float option array option
+    = "__ocaml_arrow_array_f32_values_opt"
+  ;;
+
+  external array_f64_values_opt
+    : array_ref -> float option array option
+    = "__ocaml_arrow_array_f64_values_opt"
+  ;;
+
   external array_duration_ns_values_ba
     : array_ref -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrow_array_duration_ns_values_ba"
