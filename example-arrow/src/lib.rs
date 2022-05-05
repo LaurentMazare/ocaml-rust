@@ -1,4 +1,6 @@
 use arrow::array::{Array, ArrayRef as ArrowArrayRef, TimestampNanosecondArray};
+use arrow::csv::reader::Reader as ArrowCsvReader;
+use arrow::csv::writer::Writer as ArrowCsvWriter;
 use arrow::datatypes::DataType as DT;
 use arrow::record_batch::RecordBatch as ArrowRecordBatch;
 use ocaml_rust::{BigArray1, Custom, CustomConst, RustResult};
@@ -210,6 +212,50 @@ fn writer_close(w: &FileWriter) -> RustResult<()> {
     let mut w = w.inner().lock().unwrap();
     let _metadata = w.close()?;
     Ok(())
+}
+
+fn csv_writer_new(path: String) -> RustResult<CsvFileWriter> {
+    let file = File::create(&path)?;
+    let writer = ArrowCsvWriter::new(file);
+    Ok(Custom::new(Some(writer)))
+}
+
+fn csv_writer_write(w: &CsvFileWriter, record_batch: &RecordBatch) -> RustResult<()> {
+    let mut w = w.inner().lock().unwrap();
+    let w = w.as_mut().map_or_else(|| Err("already closed"), Ok)?;
+    let record_batch = record_batch.inner();
+    w.write(record_batch)?;
+    Ok(())
+}
+
+fn csv_writer_close(w: &CsvFileWriter) {
+    let mut w = w.inner().lock().unwrap();
+    *w = None
+}
+
+fn csv_reader_new(
+    path: String,
+    batch_size: usize,
+    infer_size: Option<usize>,
+) -> RustResult<CsvFileReader> {
+    let file = File::create(&path)?;
+    let builder =
+        arrow::csv::ReaderBuilder::new().infer_schema(infer_size).with_batch_size(batch_size);
+    let reader = builder.build(file)?;
+    Ok(Custom::new(Some(reader)))
+}
+
+fn csv_reader_next(r: &CsvFileReader) -> Option<RustResult<RecordBatch>> {
+    let mut r = r.inner().lock().unwrap();
+    match r.as_mut() {
+        None => None,
+        Some(r) => r.next().map(|x| x.map_err(|err| err.into()).map(CustomConst::new)),
+    }
+}
+
+fn csv_reader_close(r: &CsvFileReader) {
+    let mut r = r.inner().lock().unwrap();
+    *r = None
 }
 
 fn array_data_type(array: &ArrayRef) -> DataType {
@@ -472,6 +518,8 @@ mod arrow {
     ocaml_include!("open! Sexplib.Conv");
     type FileReader = Custom<Option<ParquetFileArrowReader>>;
     type FileWriter = Custom<ArrowWriter<std::fs::File>>;
+    type CsvFileReader = Custom<Option<ArrowCsvReader<std::fs::File>>>;
+    type CsvFileWriter = Custom<Option<ArrowCsvWriter<std::fs::File>>>;
     type RecordReader = Custom<Option<ParquetRecordBatchReader>>;
     type RecordBatch = CustomConst<ArrowRecordBatch>;
     type ArrayRef = CustomConst<ArrowArrayRef>;
@@ -597,6 +645,18 @@ mod arrow {
         fn writer_new(record_batch: &RecordBatch, path: String) -> RustResult<FileWriter>;
         fn writer_write(w: &FileWriter, record_batch: &RecordBatch) -> RustResult<()>;
         fn writer_close(file_writer: &FileWriter) -> RustResult<()>;
+
+        fn csv_writer_new(path: String) -> RustResult<CsvFileWriter>;
+        fn csv_writer_write(w: &CsvFileWriter, record_batch: &RecordBatch) -> RustResult<()>;
+        fn csv_writer_close(file_writer: &CsvFileWriter);
+
+        fn csv_reader_new(
+            path: String,
+            batch_size: usize,
+            infer_size: Option<usize>,
+        ) -> RustResult<CsvFileReader>;
+        fn csv_reader_next(r: &CsvFileReader) -> Option<RustResult<RecordBatch>>;
+        fn csv_reader_close(r: &CsvFileReader);
 
         fn array_data_type(array: &ArrayRef) -> DataType;
         fn array_len(array: &ArrayRef) -> usize;

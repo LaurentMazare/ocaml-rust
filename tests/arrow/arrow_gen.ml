@@ -2,6 +2,8 @@ module Arrow = struct
 open! Sexplib.Conv
   type file_reader;;
   type file_writer;;
+  type csv_file_reader;;
+  type csv_file_writer;;
   type record_reader;;
   type record_batch;;
   type array_ref;;
@@ -174,6 +176,36 @@ open! Sexplib.Conv
   external writer_close
     : file_writer -> (unit, string) Result.t
     = "__ocaml_arrow_writer_close"
+  ;;
+
+  external csv_writer_new
+    : string -> (csv_file_writer, string) Result.t
+    = "__ocaml_arrow_csv_writer_new"
+  ;;
+
+  external csv_writer_write
+    : csv_file_writer -> record_batch -> (unit, string) Result.t
+    = "__ocaml_arrow_csv_writer_write"
+  ;;
+
+  external csv_writer_close
+    : csv_file_writer -> unit
+    = "__ocaml_arrow_csv_writer_close"
+  ;;
+
+  external csv_reader_new
+    : string -> int -> int option -> (csv_file_reader, string) Result.t
+    = "__ocaml_arrow_csv_reader_new"
+  ;;
+
+  external csv_reader_next
+    : csv_file_reader -> (record_batch, string) Result.t option
+    = "__ocaml_arrow_csv_reader_next"
+  ;;
+
+  external csv_reader_close
+    : csv_file_reader -> unit
+    = "__ocaml_arrow_csv_reader_close"
   ;;
 
   external array_data_type

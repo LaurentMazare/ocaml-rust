@@ -112,3 +112,27 @@ module Writer : sig
   val close : t -> unit result
   val with_writer : string -> f:(t -> 'a) -> 'a result
 end
+
+module Csv_reader : sig
+  type t
+
+  val create : ?infer_size:int -> string -> batch_size:int -> t result
+  val next : t -> [ `Eof | `Batch of Record_batch.t result ]
+  val close : t -> unit
+
+  val with_reader
+    :  ?infer_size:int
+    -> string
+    -> batch_size:int
+    -> f:(t -> 'a)
+    -> 'a result
+end
+
+module Csv_writer : sig
+  type t
+
+  val create : string -> t result
+  val append : t -> Record_batch.t -> unit result
+  val close : t -> unit
+  val with_writer : string -> f:(t -> 'a) -> 'a result
+end

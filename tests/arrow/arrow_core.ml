@@ -469,3 +469,34 @@ module Writer = struct
     let t = create filename in
     Exn.protect ~f:(fun () -> Ok (f t)) ~finally:(fun () -> ignore (close t : _ Result.t))
 end
+
+module Csv_reader = struct
+  type t = A.csv_file_reader
+
+  let create ?infer_size filename ~batch_size =
+    A.csv_reader_new filename batch_size infer_size
+
+  let next t =
+    match A.csv_reader_next t with
+    | None -> `Eof
+    | Some record_batch ->
+      `Batch (Result.map record_batch ~f:Record_batch.of_record_batch)
+
+  let close t = A.csv_reader_close t
+
+  let with_reader ?infer_size filename ~batch_size ~f =
+    create ?infer_size filename ~batch_size
+    >>= fun t -> Exn.protect ~f:(fun () -> Ok (f t)) ~finally:(fun () -> close t)
+end
+
+module Csv_writer = struct
+  type t = A.csv_file_writer
+
+  let create filename = A.csv_writer_new filename
+  let append t record_batch = A.csv_writer_write t record_batch.Record_batch.data
+  let close t = A.csv_writer_close t
+
+  let with_writer filename ~f =
+    create filename
+    >>= fun t -> Exn.protect ~f:(fun () -> Ok (f t)) ~finally:(fun () -> close t)
+end
