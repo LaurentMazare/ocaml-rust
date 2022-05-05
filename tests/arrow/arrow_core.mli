@@ -11,6 +11,7 @@ end
 
 val set_default_zone : Time_ns_unix.Zone.t -> unit
 
+type ('a, 'b) ba = ('a, 'b, Bigarray.c_layout) Bigarray.Array1.t
 type 'a result = ('a, string) Result.t
 
 val ok_exn : 'a result -> 'a
@@ -63,6 +64,10 @@ module Column : sig
     val int32 : int array -> int t
     val float64 : float array -> float t
     val float32 : float array -> float t
+    val int64_ba : (int, Bigarray.int64_elt) ba -> int t
+    val int32_ba : (int, Bigarray.int32_elt) ba -> int t
+    val float64_ba : (float, Bigarray.float64_elt) ba -> float t
+    val float32_ba : (float, Bigarray.float32_elt) ba -> float t
   end
 end
 

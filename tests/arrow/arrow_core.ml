@@ -6,6 +6,7 @@ open! Core
 open Result.Monad_infix
 module A = Arrow_gen.Arrow
 
+type ('a, 'b) ba = ('a, 'b, Bigarray.c_layout) Bigarray.Array1.t
 type 'a result = ('a, string) Result.t
 
 let ok_exn = function
@@ -146,6 +147,10 @@ module Column = struct
 
     let float64 data = { data = A.array_f64_from data; data_type = Float }
     let float32 data = { data = A.array_f32_from data; data_type = Float }
+    let float64_ba d = { data = A.array_f64_from_ba d; data_type = Float }
+    let float32_ba d = { data = A.array_f32_from_ba d; data_type = Float }
+    let int64_ba d = { data = A.array_i64_from_ba d; data_type = Int }
+    let int32_ba d = { data = A.array_i32_from_ba d; data_type = Int }
   end
 
   let of_array (type a) (data_type : a Data_type.t) (data : a array) =
