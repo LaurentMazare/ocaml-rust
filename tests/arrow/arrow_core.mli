@@ -36,9 +36,12 @@ module Column : sig
   val extract : packed -> 'a Data_type.t -> 'a t option
   val extract_exn : packed -> 'a Data_type.t -> 'a t
 
-  (* Conversion from/to OCaml data *)
+  (* Conversion from/to OCaml data. *)
   val of_array : 'a Data_type.t -> 'a array -> 'a t
-  val to_array : 'a t -> 'a array
+
+  (* [to_array ~default t] uses [default] for null values from the
+     Arrow array. *)
+  val to_array : ?default:'a -> 'a t -> 'a array
 
   (* array_ref conversion *)
   val data : _ t -> A.array_ref

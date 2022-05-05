@@ -1,6 +1,7 @@
 open! Base
 open! Sexplib.Conv
 open! Arrow_gen
+module A = Arrow_core
 
 let ok_exn = function
   | Ok ok -> ok
@@ -139,3 +140,44 @@ let%expect_test _ =
     ((0 1 1.4142135623730951 1.7320508075688772 2))
     ((1 0.5 0.33333333333333331 0.25 0.2))
     (((b<0>)(b<1>)(b<2>)(b<3>)(b<4>))) |}]
+
+let read_and_print path ~batch_size =
+  A.Reader.with_reader path ~batch_size ~f:(fun reader ->
+      let schema = A.Reader.schema reader |> ok_exn in
+      Stdio.printf "%s\n%!" (A.Schema.sexp_of_t schema |> Sexp.to_string_hum);
+      let rec loop batch_index =
+        match A.Reader.next reader with
+        | `Eof -> Stdio.printf "done\n%!"
+        | `Batch rb ->
+          let rb = ok_exn rb in
+          Stdio.printf
+            "  batch %d: %d rows, %d columns\n%!"
+            batch_index
+            (A.Record_batch.num_rows rb)
+            (A.Record_batch.num_columns rb);
+          A.Record_batch.columns rb
+          |> List.iter ~f:(fun (name, packed) ->
+                 Stdio.printf
+                   "    %s: %s\n%!"
+                   name
+                   (A.Column.sexp_of_packed packed |> Sexp.to_string_mach));
+          loop (batch_index + 1)
+      in
+      loop 1)
+  |> ok_exn
+
+let%expect_test _ =
+  read_and_print "test.parquet" ~batch_size:4096;
+  [%expect {|
+    ((fields
+      (((name x) (data_type Float64) (nullable true))
+       ((name y) (data_type Utf8) (nullable true))
+       ((name z) (data_type Float64) (nullable true))))
+     (metadata
+      ((pandas
+        "{\"index_columns\": [], \"column_indexes\": [], \"columns\": [{\"name\": \"x\", \"field_name\": \"x\", \"pandas_type\": \"float64\", \"numpy_type\": \"float64\", \"metadata\": null}, {\"name\": \"y\", \"field_name\": \"y\", \"pandas_type\": \"unicode\", \"numpy_type\": \"object\", \"metadata\": null}, {\"name\": \"z\", \"field_name\": \"z\", \"pandas_type\": \"float64\", \"numpy_type\": \"float64\", \"metadata\": null}], \"creator\": {\"library\": \"pyarrow\", \"version\": \"4.0.1\"}, \"pandas_version\": \"1.0.5\"}"))))
+      batch 1: 2 rows, 3 columns
+        x: (3.1415 NAN)
+        y: (foobar"")
+        z: (NAN 12)
+    done |}]

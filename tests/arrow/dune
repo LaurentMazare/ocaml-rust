@@ -3,7 +3,7 @@
  (modules arrow_core arrow_gen arrow_test)
  (foreign_archives ocaml_rust_arrow)
  (libraries core core_unix.time_ns_unix sexplib stdio)
- (inline_tests)
+ (inline_tests (deps test.parquet))
  (preprocess (pps ppx_expect ppx_sexp_conv ppx_sexp_message))
  (c_library_flags (-lpthread -lc -lm)))
 

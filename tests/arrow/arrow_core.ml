@@ -164,41 +164,78 @@ module Column = struct
     | Microsecond -> 1_000
     | Nanosecond -> 1
 
-  let to_array (type a) (t : a t) =
+  let to_array (type a) ?(default : a option) (t : a t) =
     let res : a array =
       match A.array_data_type t.data, t.data_type with
       | Int32, Int ->
-        Option.value_exn (A.array_i32_values t.data Int32.zero)
+        let default = Option.value default ~default:0 |> Int32.of_int_exn in
+        Option.value_exn (A.array_i32_values t.data default)
         |> Array.map ~f:Int32.to_int_exn
       | Int64, Int ->
-        Option.value_exn (A.array_i64_values t.data Int64.zero)
+        let default = Option.value default ~default:0 |> Int64.of_int_exn in
+        Option.value_exn (A.array_i64_values t.data default)
         |> Array.map ~f:Int64.to_int_exn
-      | Float32, Float -> Option.value_exn (A.array_f32_values t.data Float.nan)
-      | Float64, Float -> Option.value_exn (A.array_f64_values t.data Float.nan)
+      | Float32, Float ->
+        let default = Option.value default ~default:Float.nan in
+        Option.value_exn (A.array_f32_values t.data default)
+      | Float64, Float ->
+        let default = Option.value default ~default:Float.nan in
+        Option.value_exn (A.array_f64_values t.data default)
       | Utf8, String ->
+        let default = Option.value default ~default:"" in
         Option.value_exn (A.array_string_values t.data)
-        |> Array.map ~f:(fun v -> Option.value v ~default:"")
+        |> Array.map ~f:(fun v -> Option.value v ~default)
       | LargeUtf8, String ->
+        let default = Option.value default ~default:"" in
         Option.value_exn (A.array_large_string_values t.data)
-        |> Array.map ~f:(fun v -> Option.value v ~default:"")
+        |> Array.map ~f:(fun v -> Option.value v ~default)
       | Date32, Date ->
-        Option.value_exn (A.array_date32_values t.data Int32.zero)
+        let default =
+          Option.value_map
+            default
+            ~f:(fun d -> Date.(diff d unix_epoch) |> Int32.of_int_exn)
+            ~default:Int32.zero
+        in
+        Option.value_exn (A.array_date32_values t.data default)
         |> Array.map ~f:(fun d -> Int32.to_int_exn d |> Date.(add_days unix_epoch))
       | Time64 time_unit, Ofday ->
         let time_unit_mult = time_unit_mult time_unit in
-        Option.value_exn (A.array_time64_ns_values t.data Int64.zero)
+        let default =
+          Option.value_map
+            default
+            ~f:(fun od ->
+              Time_ns.Ofday.to_span_since_start_of_day od
+              |> Time_ns.Span.to_int_ns
+              |> fun v -> v / time_unit_mult |> Int64.of_int_exn)
+            ~default:Int64.zero
+        in
+        Option.value_exn (A.array_time64_ns_values t.data default)
         |> Array.map ~f:(fun d ->
                Int64.to_int_exn d * time_unit_mult
                |> Time_ns.Span.of_int_ns
                |> Time_ns.Ofday.of_span_since_start_of_day_exn)
       | Duration time_unit, Span ->
         let time_unit_mult = time_unit_mult time_unit in
-        Option.value_exn (A.array_time64_ns_values t.data Int64.zero)
+        let default =
+          Option.value_map
+            default
+            ~f:(fun sp ->
+              Time_ns.Span.to_int_ns sp |> fun v -> v / time_unit_mult |> Int64.of_int_exn)
+            ~default:Int64.zero
+        in
+        Option.value_exn (A.array_time64_ns_values t.data default)
         |> Array.map ~f:(fun d ->
                Int64.to_int_exn d * time_unit_mult |> Time_ns.Span.of_int_ns)
       | Timestamp (time_unit, _zone), Time ->
         let time_unit_mult = time_unit_mult time_unit in
-        Option.value_exn (A.array_timestamp_ns_values t.data Int64.zero)
+        let default =
+          Option.value_map
+            default
+            ~f:(fun ts ->
+              Time_ns.to_int_ns_since_epoch ts / time_unit_mult |> Int64.of_int_exn)
+            ~default:Int64.zero
+        in
+        Option.value_exn (A.array_timestamp_ns_values t.data default)
         |> Array.map ~f:(fun ts ->
                Int64.to_int_exn ts * time_unit_mult |> Time_ns.of_int_ns_since_epoch)
       | data_type, _data_type ->
