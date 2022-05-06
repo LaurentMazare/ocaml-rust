@@ -298,6 +298,26 @@ module Column = struct
     | String -> to_array t |> [%sexp_of: string array]
 
   let sexp_of_packed (P t) = sexp_of t
+
+  module Bigarray = struct
+    type t =
+      | Int32 of (int, Bigarray.int32_elt) ba
+      | Int64 of (int, Bigarray.int64_elt) ba
+      | Float32 of (float, Bigarray.float32_elt) ba
+      | Float64 of (float, Bigarray.float64_elt) ba
+
+    let get (P t) =
+      match A.array_data_type t.data with
+      | Int32 ->
+        A.array_i32_values_ba t.data Int32.zero |> Option.map ~f:(fun ba -> Int32 ba)
+      | Int64 ->
+        A.array_i64_values_ba t.data Int64.zero |> Option.map ~f:(fun ba -> Int64 ba)
+      | Float32 ->
+        A.array_f32_values_ba t.data Float.nan |> Option.map ~f:(fun ba -> Float32 ba)
+      | Float64 ->
+        A.array_f64_values_ba t.data Float.nan |> Option.map ~f:(fun ba -> Float64 ba)
+      | _ -> None
+  end
 end
 
 module Record_batch = struct

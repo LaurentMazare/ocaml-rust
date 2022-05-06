@@ -69,6 +69,16 @@ module Column : sig
     val float64_ba : (float, Bigarray.float64_elt) ba -> float t
     val float32_ba : (float, Bigarray.float32_elt) ba -> float t
   end
+
+  module Bigarray : sig
+    type t =
+      | Int32 of (int, Bigarray.int32_elt) ba
+      | Int64 of (int, Bigarray.int64_elt) ba
+      | Float32 of (float, Bigarray.float32_elt) ba
+      | Float64 of (float, Bigarray.float64_elt) ba
+
+    val get : packed -> t option
+  end
 end
 
 module Record_batch : sig
