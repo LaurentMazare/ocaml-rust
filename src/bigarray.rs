@@ -44,6 +44,17 @@ impl<E: Elem> BigArray1<E> {
         let dim = unsafe { std::slice::from_raw_parts(ba.dim.as_ptr() as *const isize, 1) };
         unsafe { std::slice::from_raw_parts(ba.data as *const E, dim[0] as usize) }
     }
+
+    pub fn data_mut(&mut self) -> &mut [E] {
+        let v = self.0.to_value();
+        let ba = unsafe { ocaml_sys::field(v, 1) } as *mut ocaml_sys::bigarray::Bigarray;
+        let ba = unsafe { &*ba };
+        if ba.num_dims != 1 {
+            panic!("unexpected number of dimensions for bigarray {}", ba.num_dims)
+        }
+        let dim = unsafe { std::slice::from_raw_parts(ba.dim.as_ptr() as *const isize, 1) };
+        unsafe { std::slice::from_raw_parts_mut(ba.data as *mut E, dim[0] as usize) }
+    }
 }
 
 impl Elem for u8 {

@@ -316,12 +316,20 @@ macro_rules! value_fns {
             })
         }
 
-        fn $value_fn_ba(array: &ArrayRef) -> Option<BigArray1<$typ>> {
+        fn $value_fn_ba(array: &ArrayRef, default: $typ) -> Option<BigArray1<$typ>> {
             let array = array.inner();
-            array
-                .as_any()
-                .downcast_ref::<arrow::array::$array_typ>()
-                .map(|x| BigArray1::new(x.values()))
+            array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| {
+                let mut ba = BigArray1::new(x.values());
+                if x.null_count() > 1 {
+                    let data = ba.data_mut();
+                    for (i, v) in data.iter_mut().enumerate() {
+                        if x.is_null(i) {
+                            *v = default
+                        }
+                    }
+                }
+                ba
+            })
         }
     };
 }
@@ -705,16 +713,16 @@ mod arrow {
         fn array_f32_values_opt(array: &ArrayRef) -> Option<Vec<Option<f32>>>;
         fn array_f64_values_opt(array: &ArrayRef) -> Option<Vec<Option<f64>>>;
 
-        fn array_duration_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
-        fn array_time64_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
-        fn array_timestamp_ns_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
-        fn array_date32_values_ba(array: &ArrayRef) -> Option<BigArray1<i32>>;
-        fn array_date64_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
-        fn array_char_values_ba(array: &ArrayRef) -> Option<BigArray1<u8>>;
-        fn array_i32_values_ba(array: &ArrayRef) -> Option<BigArray1<i32>>;
-        fn array_i64_values_ba(array: &ArrayRef) -> Option<BigArray1<i64>>;
-        fn array_f32_values_ba(array: &ArrayRef) -> Option<BigArray1<f32>>;
-        fn array_f64_values_ba(array: &ArrayRef) -> Option<BigArray1<f64>>;
+        fn array_duration_ns_values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
+        fn array_time64_ns_values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
+        fn array_timestamp_ns_values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
+        fn array_date32_values_ba(array: &ArrayRef, default: i32) -> Option<BigArray1<i32>>;
+        fn array_date64_values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
+        fn array_char_values_ba(array: &ArrayRef, default: u8) -> Option<BigArray1<u8>>;
+        fn array_i32_values_ba(array: &ArrayRef, default: i32) -> Option<BigArray1<i32>>;
+        fn array_i64_values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
+        fn array_f32_values_ba(array: &ArrayRef, default: f32) -> Option<BigArray1<f32>>;
+        fn array_f64_values_ba(array: &ArrayRef, default: f64) -> Option<BigArray1<f64>>;
 
         fn array_timestamp_ns_from_with_zone(v: Vec<i64>, zone: Option<String>) -> ArrayRef;
 
