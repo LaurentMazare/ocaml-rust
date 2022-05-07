@@ -484,13 +484,23 @@ open! Sexplib.Conv
   ;;
 
   external array_string_values
-    : array_ref -> string option array option
+    : array_ref -> string -> string array option
     = "__ocaml_arrow_array_string_values"
   ;;
 
   external array_large_string_values
-    : array_ref -> string option array option
+    : array_ref -> string -> string array option
     = "__ocaml_arrow_array_large_string_values"
+  ;;
+
+  external array_string_values_opt
+    : array_ref -> string option array option
+    = "__ocaml_arrow_array_string_values_opt"
+  ;;
+
+  external array_large_string_values_opt
+    : array_ref -> string option array option
+    = "__ocaml_arrow_array_large_string_values_opt"
   ;;
 
 end

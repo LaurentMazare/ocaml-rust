@@ -187,12 +187,10 @@ module Column = struct
       Option.value_exn (A.array_f64_values t.data default)
     | Utf8, String ->
       let default = Option.value default ~default:"" in
-      Option.value_exn (A.array_string_values t.data)
-      |> Array.map ~f:(fun v -> Option.value v ~default)
+      Option.value_exn (A.array_string_values t.data default)
     | LargeUtf8, String ->
       let default = Option.value default ~default:"" in
-      Option.value_exn (A.array_large_string_values t.data)
-      |> Array.map ~f:(fun v -> Option.value v ~default)
+      Option.value_exn (A.array_large_string_values t.data default)
     | Date32, Date ->
       let default =
         Option.value_map
@@ -255,8 +253,8 @@ module Column = struct
       |> Array.map ~f:(Option.map ~f:Int64.to_int_exn)
     | Float32, Float -> Option.value_exn (A.array_f32_values_opt t.data)
     | Float64, Float -> Option.value_exn (A.array_f64_values_opt t.data)
-    | Utf8, String -> Option.value_exn (A.array_string_values t.data)
-    | LargeUtf8, String -> Option.value_exn (A.array_large_string_values t.data)
+    | Utf8, String -> Option.value_exn (A.array_string_values_opt t.data)
+    | LargeUtf8, String -> Option.value_exn (A.array_large_string_values_opt t.data)
     | Date32, Date ->
       Option.value_exn (A.array_date32_values_opt t.data)
       |> Array.map

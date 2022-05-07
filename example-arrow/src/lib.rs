@@ -440,7 +440,21 @@ fn array_large_string_from(vec: Vec<String>) -> ArrayRef {
     CustomConst::new(Arc::new(array))
 }
 
-fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>> {
+fn array_string_values(array: &ArrayRef, default: String) -> Option<Vec<String>> {
+    let array = array.inner();
+    array.as_any().downcast_ref::<arrow::array::StringArray>().map(|array| {
+        array.iter().map(|s| s.map_or_else(|| default.to_string(), |s| s.to_string())).collect()
+    })
+}
+
+fn array_large_string_values(array: &ArrayRef, default: String) -> Option<Vec<String>> {
+    let array = array.inner();
+    array.as_any().downcast_ref::<arrow::array::LargeStringArray>().map(|array| {
+        array.iter().map(|s| s.map_or_else(|| default.to_string(), |s| s.to_string())).collect()
+    })
+}
+
+fn array_string_values_opt(array: &ArrayRef) -> Option<Vec<Option<String>>> {
     let array = array.inner();
     array
         .as_any()
@@ -448,7 +462,7 @@ fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>> {
         .map(|array| array.iter().map(|s| s.map(|s| s.to_string())).collect())
 }
 
-fn array_large_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>> {
+fn array_large_string_values_opt(array: &ArrayRef) -> Option<Vec<Option<String>>> {
     let array = array.inner();
     array
         .as_any()
@@ -728,7 +742,9 @@ mod arrow {
 
         fn array_string_from(v: Vec<String>) -> ArrayRef;
         fn array_large_string_from(v: Vec<String>) -> ArrayRef;
-        fn array_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>>;
-        fn array_large_string_values(array: &ArrayRef) -> Option<Vec<Option<String>>>;
+        fn array_string_values(array: &ArrayRef, default: String) -> Option<Vec<String>>;
+        fn array_large_string_values(array: &ArrayRef, default: String) -> Option<Vec<String>>;
+        fn array_string_values_opt(array: &ArrayRef) -> Option<Vec<Option<String>>>;
+        fn array_large_string_values_opt(array: &ArrayRef) -> Option<Vec<Option<String>>>;
     }
 }

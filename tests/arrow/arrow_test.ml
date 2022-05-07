@@ -92,7 +92,7 @@ let%expect_test _ =
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
   let column = (Arrow.record_batch_column rb 1 |> Arrow.array_f64_values) Float.nan in
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
-  let column = Arrow.record_batch_column rb 2 |> Arrow.array_string_values in
+  let column = Arrow.record_batch_column rb 2 |> Arrow.array_string_values_opt in
   Stdio.printf
     "%s\n%!"
     ([%sexp_of: string option array option] column |> Sexp.to_string_mach);
@@ -131,7 +131,7 @@ let%expect_test _ =
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
   let column = (Arrow.record_batch_column rb 1 |> Arrow.array_f64_values) Float.nan in
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
-  let column = Arrow.record_batch_column rb 2 |> Arrow.array_string_values in
+  let column = Arrow.record_batch_column rb 2 |> Arrow.array_string_values_opt in
   Stdio.printf
     "%s\n%!"
     ([%sexp_of: string option array option] column |> Sexp.to_string_mach);
@@ -186,7 +186,8 @@ let%expect_test _ =
   let rb = A.Record_batch.concat [ rb; rb; rb; rb ] |> ok_exn in
   A.Record_batch.write_parquet rb "tmp-test.parquet" |> ok_exn;
   read_and_print "tmp-test.parquet" ~batch_size:3;
-  [%expect {|
+  [%expect
+    {|
     ((fields
       (((name x) (data_type Float64) (nullable true))
        ((name y) (data_type Utf8) (nullable true))
