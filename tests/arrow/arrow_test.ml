@@ -186,6 +186,7 @@ let%expect_test _ =
   let rb = A.Record_batch.concat [ rb; rb; rb; rb ] |> ok_exn in
   A.Record_batch.write_parquet rb "tmp-test.parquet" |> ok_exn;
   read_and_print "tmp-test.parquet" ~batch_size:3;
+  Unix.unlink "tmp-test.parquet";
   [%expect
     {|
     ((fields
