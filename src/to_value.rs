@@ -171,21 +171,19 @@ where
 
 impl ToValue for Vec<u8> {
     fn to_value(&self) -> ocaml_sys::Value {
-        let rv: RootedValue<()> =
-            RootedValue::create(unsafe { ocaml_sys::caml_alloc_string(self.len()) });
-        let content_ptr = unsafe { ocaml_sys::string_val(rv.value().value) };
+        let value = unsafe { ocaml_sys::caml_alloc_string(self.len()) };
+        let content_ptr = unsafe { ocaml_sys::string_val(value) };
         unsafe { std::ptr::copy_nonoverlapping(self.as_ptr(), content_ptr, self.len()) };
-        rv.value().value
+        value
     }
 }
 
 impl ToValue for String {
     fn to_value(&self) -> ocaml_sys::Value {
-        let rv: RootedValue<Self> =
-            RootedValue::create(unsafe { ocaml_sys::caml_alloc_string(self.len()) });
-        let content_ptr = unsafe { ocaml_sys::string_val(rv.value().value) };
+        let value = unsafe { ocaml_sys::caml_alloc_string(self.len()) };
+        let content_ptr = unsafe { ocaml_sys::string_val(value) };
         unsafe { std::ptr::copy_nonoverlapping(self.as_ptr(), content_ptr, self.len()) };
-        rv.value().value
+        value
     }
 }
 
