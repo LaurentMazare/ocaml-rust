@@ -31,6 +31,7 @@ fn vec_add(x: Vec<isize>, y: isize) -> Vec<isize> {
 #[ocaml_rust::bridge]
 mod ffi {
     extern "Rust" {
+        #[namespace = "foo"]
         fn add_one(x: isize) -> isize;
         fn add_i64(x: i64, y: i64) -> i64;
         fn str_format(x: (isize, isize), y: String) -> String;

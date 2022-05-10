@@ -319,7 +319,7 @@ impl Api {
                 ApiItem::ForeignMod { attrs: _, lang: _, brace_token: _, items } => {
                     for item in items.iter() {
                         match item {
-                            ModItem::Fn { ident, args, output: (output, _) } => {
+                            ModItem::Fn { ident, args, output: (output, _), attrs: _ } => {
                                 let ocaml_ident =
                                     syn::Ident::new(&self.c_fn_name(ident), ident.span());
                                 let arg_with_types: Vec<_> = args

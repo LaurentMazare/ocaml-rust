@@ -161,7 +161,7 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                 ApiItem::ForeignMod { lang: Lang::Rust, items, .. } => {
                     for item in items {
                         match item {
-                            ModItem::Fn { ident, args, output } => {
+                            ModItem::Fn { ident, args, output, attrs: _ } => {
                                 let args = if !args.is_empty() {
                                     let args: Result<Vec<std::string::String>, syn::parse::Error> =
                                         args.iter()

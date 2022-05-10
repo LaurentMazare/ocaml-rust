@@ -188,11 +188,30 @@ impl Lang {
     }
 }
 
+pub struct Attrs {
+    pub namespace: Option<String>,
+}
+
+impl Attrs {
+    fn parse(attrs: Vec<Attribute>) -> Result<Self> {
+        let mut namespace = None;
+        for attr in attrs.iter() {
+            if attr.path.is_ident("namespace") {
+                namespace = Some(attr.tokens.to_string())
+            } else {
+                return Err(Error::new_spanned(attr, "unsupported attribute"));
+            }
+        }
+        Ok(Attrs { namespace })
+    }
+}
+
 pub enum ModItem {
     Fn {
         ident: proc_macro2::Ident,
         args: Vec<(syn::PatIdent, Box<syn::Type>, Type)>,
         output: (Box<syn::Type>, Type),
+        attrs: Attrs,
     },
 }
 
@@ -285,7 +304,12 @@ impl Parse for ApiItem {
                                     (type_.clone(), ty)
                                 }
                             };
-                            mod_items.push(ModItem::Fn { ident: f.sig.ident, args, output })
+                            mod_items.push(ModItem::Fn {
+                                ident: f.sig.ident,
+                                args,
+                                output,
+                                attrs: Attrs::parse(f.attrs)?,
+                            })
                         }
                         _ => {
                             return Err(Error::new(item.span(), "unsupported in extern mod"));
