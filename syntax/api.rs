@@ -188,16 +188,27 @@ impl Lang {
     }
 }
 
+struct Namespace(String);
+
+impl Parse for Namespace {
+    fn parse(input: ParseStream) -> Result<Self> {
+        input.parse::<Token![=]>()?;
+        let lit_str: syn::LitStr = input.parse()?;
+        Ok(Namespace(lit_str.value()))
+    }
+}
+
 pub struct Attrs {
-    pub namespace: Option<String>,
+    pub namespace: Option<Vec<String>>,
 }
 
 impl Attrs {
     fn parse(attrs: Vec<Attribute>) -> Result<Self> {
         let mut namespace = None;
-        for attr in attrs.iter() {
+        for attr in attrs.into_iter() {
             if attr.path.is_ident("namespace") {
-                namespace = Some(attr.tokens.to_string())
+                let value: Namespace = syn::parse2(attr.tokens)?;
+                namespace = Some(value.0.split("::").map(String::from).collect())
             } else {
                 return Err(Error::new_spanned(attr, "unsupported attribute"));
             }
