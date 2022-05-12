@@ -306,9 +306,10 @@ fn is_ref(ty: &syn::Type) -> bool {
 
 impl Api {
     #[allow(dead_code)]
-    pub fn c_fn_name(&self, ident: &proc_macro2::Ident) -> String {
+    pub fn c_fn_name(&self, ident: &proc_macro2::Ident, namespace: Option<&Vec<String>>) -> String {
         let api_ident = &self.ident;
-        format!("__ocaml_{}_{}", api_ident, ident)
+        let namespace = namespace.map_or_else(|| "".to_string(), |s| s.join("_") + "_");
+        format!("__ocaml_{}{}_{}", api_ident, namespace, ident)
     }
 
     #[allow(dead_code)]
@@ -319,9 +320,11 @@ impl Api {
                 ApiItem::ForeignMod { attrs: _, lang: _, brace_token: _, items } => {
                     for item in items.iter() {
                         match item {
-                            ModItem::Fn { ident, args, output: (output, _), attrs: _ } => {
-                                let ocaml_ident =
-                                    syn::Ident::new(&self.c_fn_name(ident), ident.span());
+                            ModItem::Fn { ident, args, output: (output, _), attrs } => {
+                                let ocaml_ident = syn::Ident::new(
+                                    &self.c_fn_name(ident, attrs.namespace.as_ref()),
+                                    ident.span(),
+                                );
                                 let arg_with_types: Vec<_> = args
                                     .iter()
                                     .map(|(ident, _ty, _ty2)| quote! { #ident: ocaml_sys::Value})

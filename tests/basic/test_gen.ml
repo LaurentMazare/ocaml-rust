@@ -1,7 +1,7 @@
 module Ffi = struct
   external add_one
     : int -> int
-    = "__ocaml_ffi_add_one"
+    = "__ocaml_ffifoo__add_one"
   ;;
 
   external add_i64
