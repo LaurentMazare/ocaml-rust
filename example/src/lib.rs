@@ -8,8 +8,10 @@ fn option_result(v: Option<isize>, e: String) -> Result<isize, String> {
     }
 }
 
-fn add_one(x: isize) -> isize {
-    x + 1
+mod foo {
+    pub fn add_one(x: isize) -> isize {
+        x + 1
+    }
 }
 
 fn add_i64(x: i64, y: i64) -> i64 {

@@ -349,13 +349,22 @@ impl Api {
                                         }
                                     })
                                     .collect();
+                                let namespace_ident = match &attrs.namespace {
+                                    None => quote! { #ident},
+                                    Some(namespace) => {
+                                        let namespace = namespace
+                                            .iter()
+                                            .map(|s| syn::Ident::new(s, ident.span()));
+                                        quote! { #(#namespace)::*::#ident }
+                                    }
+                                };
                                 expanded.extend(quote! {
                                 #[no_mangle]
                                 pub extern "C" fn #ocaml_ident(#(#arg_with_types),*) -> ocaml_sys::Value {
                                     ocaml_rust::initial_setup();
                                     #(#args_conv)*;
                                     #[allow(clippy::unnecessary_mut_passed)]
-                                    let res: #output = #ident(#(#args),*);
+                                    let res: #output = #namespace_ident(#(#args),*);
                                     <#output as ocaml_rust::to_value::ToValue>::to_value(&res)
                                 } })
                             }
