@@ -2,6 +2,7 @@ mod syntax;
 use crate::syntax::api::{ApiItem, Lang, ModItem};
 use crate::syntax::file::File;
 use clap::Parser;
+use std::collections::BTreeMap;
 use std::io::{Read, Write};
 use syn::Attribute; // TODO : Add compact to what was the Header before
 
@@ -69,6 +70,40 @@ fn ocaml_deriving(attrs: &[Attribute]) -> String {
         "".to_string()
     } else {
         format!("[@@deriving {}]", deriving.join(","))
+    }
+}
+
+struct InScope {
+    items: Vec<ModItem>,
+    inner: BTreeMap<String, InScope>,
+}
+
+impl InScope {
+    fn new() -> Self {
+        Self { items: vec![], inner: BTreeMap::new() }
+    }
+
+    fn insert(&mut self, item: ModItem) {
+        fn insert_loop(s: &mut InScope, item: ModItem, index: usize) {
+            let namespace = match &item {
+                ModItem::Fn { attrs, .. } => attrs.namespace.as_ref().unwrap(),
+            };
+            if index >= namespace.len() {
+                s.items.push(item)
+            } else {
+                let key = namespace[index].to_string();
+                let s = s.inner.entry(key).or_insert_with(InScope::new);
+                insert_loop(s, item, index + 1)
+            }
+        }
+        let attrs_is_none = match &item {
+            ModItem::Fn { attrs, .. } => attrs.namespace.is_none(),
+        };
+        if attrs_is_none {
+            self.items.push(item)
+        } else {
+            insert_loop(self, item, 0)
+        }
     }
 }
 
