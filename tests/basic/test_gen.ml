@@ -1,9 +1,4 @@
 module Ffi = struct
-  external add_one
-    : int -> int
-    = "__ocaml_ffifoo__add_one"
-  ;;
-
   external add_i64
     : Int64.t -> Int64.t -> Int64.t
     = "__ocaml_ffi_add_i64"
@@ -29,6 +24,13 @@ module Ffi = struct
     = "__ocaml_ffi_vec_add"
   ;;
 
+module Foo = struct
+  external add_one
+    : int -> int
+    = "__ocaml_ffifoo__add_one"
+  ;;
+
+end
 end
 module Ffi2 = struct
   type my_vec;;

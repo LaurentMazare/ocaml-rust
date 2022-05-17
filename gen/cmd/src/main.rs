@@ -105,6 +105,46 @@ impl InScope {
             insert_loop(self, item, 0)
         }
     }
+
+    fn write<W: Write>(
+        &self,
+        w: &mut W,
+        api_ident: &proc_macro2::Ident,
+    ) -> Result<(), syntax::Error> {
+        for item in self.items.iter() {
+            match item {
+                ModItem::Fn { ident, args, output, attrs } => {
+                    let args = if !args.is_empty() {
+                        let args: Result<Vec<std::string::String>, syn::parse::Error> = args
+                            .iter()
+                            .map(|(_ident, _ty, typ)| Ok(typ.to_ocaml_string()))
+                            .collect();
+                        args?.join(" -> ")
+                    } else {
+                        "unit".to_string()
+                    };
+                    let output = output.1.to_ocaml_string();
+                    writeln!(w, "  external {}", ident)?;
+                    writeln!(w, "    : {} -> {}", args, output)?;
+                    writeln!(
+                        w,
+                        "    = \"{}\"\n  ;;\n",
+                        crate::syntax::expand::c_fn_name(
+                            api_ident,
+                            ident,
+                            attrs.namespace.as_ref()
+                        )
+                    )?;
+                }
+            }
+        }
+        for (k, v) in self.inner.iter() {
+            writeln!(w, "module {} = struct", capitalize(k))?;
+            v.write(w, api_ident)?;
+            writeln!(w, "end")?;
+        }
+        Ok(())
+    }
 }
 
 fn try_main(args: Args) -> Result<(), syntax::Error> {
@@ -112,7 +152,7 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
     proc_macro2::fallback::force();
     let file: File = syn::parse_str(&rust_source)?;
     let mut w = std::fs::File::create(args.ocaml_file)?;
-    for api in file.apis.iter() {
+    for api in file.apis.into_iter() {
         writeln!(w, "module {} = struct", capitalize(&api.ident.to_string()))?;
         for api_item in api.api_items.iter() {
             match api_item {
@@ -191,31 +231,12 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                 ApiItem::Other(_) => {}
             }
         }
-        for api_item in api.api_items.iter() {
+        let mut in_scope = InScope::new();
+        for api_item in api.api_items.into_iter() {
             match api_item {
                 ApiItem::ForeignMod { lang: Lang::Rust, items, .. } => {
                     for item in items {
-                        match item {
-                            ModItem::Fn { ident, args, output, attrs } => {
-                                let args = if !args.is_empty() {
-                                    let args: Result<Vec<std::string::String>, syn::parse::Error> =
-                                        args.iter()
-                                            .map(|(_ident, _ty, typ)| Ok(typ.to_ocaml_string()))
-                                            .collect();
-                                    args?.join(" -> ")
-                                } else {
-                                    "unit".to_string()
-                                };
-                                let output = output.1.to_ocaml_string();
-                                writeln!(w, "  external {}", ident)?;
-                                writeln!(w, "    : {} -> {}", args, output)?;
-                                writeln!(
-                                    w,
-                                    "    = \"{}\"\n  ;;\n",
-                                    api.c_fn_name(ident, attrs.namespace.as_ref())
-                                )?;
-                            }
-                        }
+                        in_scope.insert(item)
                     }
                 }
                 ApiItem::ForeignMod { lang: Lang::OCaml, .. }
@@ -226,6 +247,7 @@ fn try_main(args: Args) -> Result<(), syntax::Error> {
                 | ApiItem::Other(_) => {}
             }
         }
+        in_scope.write(&mut w, &api.ident)?;
         writeln!(w, "end")?;
     }
     Ok(())

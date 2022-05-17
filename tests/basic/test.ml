@@ -5,7 +5,7 @@ open! Test_gen
 type 'a res = ('a, string) Result.t [@@deriving sexp]
 
 let%expect_test _ =
-  Stdio.printf "%d\n%!" (Ffi.add_one 41);
+  Stdio.printf "%d\n%!" (Ffi.Foo.add_one 41);
   Stdio.printf
     "%d\n%!"
     (Ffi.add_i64 (Int64.of_int 1234) (Int64.of_int 5678) |> Int64.to_int_exn);
@@ -145,7 +145,8 @@ let%expect_test _ =
   let q = { Ffi_double_array.a = 3.14; b = 15.92; c = 65.35; d = 89.79 } in
   let q_2 = Ffi_double_array.add_quat q q in
   Stdio.print_s ([%sexp_of: Ffi_double_array.quaternion] q_2);
-  [%expect {|
+  [%expect
+    {|
     ((a 1) (b 2) (c 0) (d -4))
     Quaternion { a: 3.14, b: 15.92, c: 65.35, d: 89.79 } Quaternion { a: 3.14, b: 15.92, c: 65.35, d: 89.79 }
     ((a 6.28) (b 31.84) (c 130.69999694824219) (d 179.58)) |}]
