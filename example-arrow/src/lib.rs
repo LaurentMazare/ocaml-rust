@@ -274,156 +274,84 @@ fn array_null_count(array: &ArrayRef) -> usize {
 }
 
 macro_rules! value_fns {
-    ($from_fn: ident, $from_fn_ba: ident, $value_fn: ident, $value_fn_opt: ident, $value_fn_ba: ident, $typ: ident, $array_typ: ident) => {
-        fn $from_fn(array: Vec<$typ>) -> ArrayRef {
-            let array = arrow::array::$array_typ::from_iter_values(array.into_iter());
-            CustomConst::new(Arc::new(array))
-        }
+    ($mod_ident: ident, $typ: ident, $array_typ: ident) => {
+        mod $mod_ident {
+            use super::*;
+            #[allow(dead_code)]
+            pub(crate) fn from(array: Vec<$typ>) -> ArrayRef {
+                let array = arrow::array::$array_typ::from_iter_values(array.into_iter());
+                CustomConst::new(Arc::new(array))
+            }
 
-        fn $from_fn_ba(array: BigArray1<$typ>) -> ArrayRef {
-            let array = arrow::array::$array_typ::from_iter_values(array.data().iter().map(|&x| x));
-            CustomConst::new(Arc::new(array))
-        }
+            #[allow(dead_code)]
+            pub(crate) fn from_ba(array: BigArray1<$typ>) -> ArrayRef {
+                let array =
+                    arrow::array::$array_typ::from_iter_values(array.data().iter().map(|&x| x));
+                CustomConst::new(Arc::new(array))
+            }
 
-        fn $value_fn(array: &ArrayRef, default: $typ) -> Option<Vec<$typ>> {
-            let array = array.inner();
-            array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| {
-                if x.null_count() > 0 {
-                    x.values()
-                        .iter()
-                        .enumerate()
-                        .map(|(i, v)| if x.is_null(i) { default } else { *v })
-                        .collect::<Vec<_>>()
-                } else {
-                    x.values().to_vec()
-                }
-            })
-        }
+            #[allow(dead_code)]
+            pub(crate) fn values(array: &ArrayRef, default: $typ) -> Option<Vec<$typ>> {
+                let array = array.inner();
+                array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| {
+                    if x.null_count() > 0 {
+                        x.values()
+                            .iter()
+                            .enumerate()
+                            .map(|(i, v)| if x.is_null(i) { default } else { *v })
+                            .collect::<Vec<_>>()
+                    } else {
+                        x.values().to_vec()
+                    }
+                })
+            }
 
-        #[allow(dead_code)]
-        fn $value_fn_opt(array: &ArrayRef) -> Option<Vec<Option<$typ>>> {
-            let array = array.inner();
-            array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| {
-                if x.null_count() > 0 {
-                    x.values()
-                        .iter()
-                        .enumerate()
-                        .map(|(i, v)| if x.is_null(i) { None } else { Some(*v) })
-                        .collect::<Vec<_>>()
-                } else {
-                    x.values().iter().map(|v| Some(*v)).collect()
-                }
-            })
-        }
+            #[allow(dead_code)]
+            pub(crate) fn values_opt(array: &ArrayRef) -> Option<Vec<Option<$typ>>> {
+                let array = array.inner();
+                array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| {
+                    if x.null_count() > 0 {
+                        x.values()
+                            .iter()
+                            .enumerate()
+                            .map(|(i, v)| if x.is_null(i) { None } else { Some(*v) })
+                            .collect::<Vec<_>>()
+                    } else {
+                        x.values().iter().map(|v| Some(*v)).collect()
+                    }
+                })
+            }
 
-        fn $value_fn_ba(array: &ArrayRef, default: $typ) -> Option<BigArray1<$typ>> {
-            let array = array.inner();
-            array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| {
-                let mut ba = BigArray1::new(x.values());
-                if x.null_count() > 1 {
-                    let data = ba.data_mut();
-                    for (i, v) in data.iter_mut().enumerate() {
-                        if x.is_null(i) {
-                            *v = default
+            #[allow(dead_code)]
+            pub(crate) fn values_ba(array: &ArrayRef, default: $typ) -> Option<BigArray1<$typ>> {
+                let array = array.inner();
+                array.as_any().downcast_ref::<arrow::array::$array_typ>().map(|x| {
+                    let mut ba = BigArray1::new(x.values());
+                    if x.null_count() > 1 {
+                        let data = ba.data_mut();
+                        for (i, v) in data.iter_mut().enumerate() {
+                            if x.is_null(i) {
+                                *v = default
+                            }
                         }
                     }
-                }
-                ba
-            })
+                    ba
+                })
+            }
         }
     };
 }
 
-value_fns!(
-    array_duration_ns_from,
-    array_duration_ns_from_ba,
-    array_duration_ns_values,
-    array_duration_ns_values_opt,
-    array_duration_ns_values_ba,
-    i64,
-    DurationNanosecondArray
-);
-value_fns!(
-    array_time64_ns_from,
-    array_time64_ns_from_ba,
-    array_time64_ns_values,
-    array_time64_ns_values_opt,
-    array_time64_ns_values_ba,
-    i64,
-    Time64NanosecondArray
-);
-value_fns!(
-    array_timestamp_ns_from,
-    array_timestamp_ns_from_ba,
-    array_timestamp_ns_values,
-    array_timestamp_ns_values_opt,
-    array_timestamp_ns_values_ba,
-    i64,
-    TimestampNanosecondArray
-);
-value_fns!(
-    array_date32_from,
-    array_date32_from_ba,
-    array_date32_values,
-    array_date32_values_opt,
-    array_date32_values_ba,
-    i32,
-    Date32Array
-);
-value_fns!(
-    array_date64_from,
-    array_date64_from_ba,
-    array_date64_values,
-    array_date64_values_opt,
-    array_date64_values_ba,
-    i64,
-    Date64Array
-);
-value_fns!(
-    array_char_from,
-    array_char_from_ba,
-    array_char_values,
-    array_char_values_opt,
-    array_char_values_ba,
-    u8,
-    UInt8Array
-);
-value_fns!(
-    array_i32_from,
-    array_i32_from_ba,
-    array_i32_values,
-    array_i32_values_opt,
-    array_i32_values_ba,
-    i32,
-    Int32Array
-);
-value_fns!(
-    array_i64_from,
-    array_i64_from_ba,
-    array_i64_values,
-    array_i64_values_opt,
-    array_i64_values_ba,
-    i64,
-    Int64Array
-);
-value_fns!(
-    array_f32_from,
-    array_f32_from_ba,
-    array_f32_values,
-    array_f32_values_opt,
-    array_f32_values_ba,
-    f32,
-    Float32Array
-);
-value_fns!(
-    array_f64_from,
-    array_f64_from_ba,
-    array_f64_values,
-    array_f64_values_opt,
-    array_f64_values_ba,
-    f64,
-    Float64Array
-);
+value_fns!(array_duration_ns, i64, DurationNanosecondArray);
+value_fns!(array_time64_ns, i64, Time64NanosecondArray);
+value_fns!(array_timestamp_ns, i64, TimestampNanosecondArray);
+value_fns!(array_date32, i32, Date32Array);
+value_fns!(array_date64, i64, Date64Array);
+value_fns!(array_char, u8, UInt8Array);
+value_fns!(array_i32, i32, Int32Array);
+value_fns!(array_i64, i64, Int64Array);
+value_fns!(array_f32, f32, Float32Array);
+value_fns!(array_f64, f64, Float64Array);
 
 fn array_timestamp_ns_from_with_zone(vec: Vec<i64>, zone: Option<String>) -> ArrayRef {
     let array: TimestampNanosecondArray = arrow::array::PrimitiveArray::from_vec(vec, zone);
@@ -684,59 +612,113 @@ mod arrow {
         fn array_len(array: &ArrayRef) -> usize;
         fn array_null_count(array: &ArrayRef) -> usize;
 
-        fn array_duration_ns_from_ba(v: BigArray1<i64>) -> ArrayRef;
-        fn array_time64_ns_from_ba(v: BigArray1<i64>) -> ArrayRef;
-        fn array_timestamp_ns_from_ba(v: BigArray1<i64>) -> ArrayRef;
-        fn array_date32_from_ba(v: BigArray1<i32>) -> ArrayRef;
-        fn array_date64_from_ba(v: BigArray1<i64>) -> ArrayRef;
-        fn array_char_from_ba(v: BigArray1<u8>) -> ArrayRef;
-        fn array_i32_from_ba(v: BigArray1<i32>) -> ArrayRef;
-        fn array_i64_from_ba(v: BigArray1<i64>) -> ArrayRef;
-        fn array_f32_from_ba(v: BigArray1<f32>) -> ArrayRef;
-        fn array_f64_from_ba(v: BigArray1<f64>) -> ArrayRef;
+        #[namespace = "array_duration_ns"]
+        fn from_ba(v: BigArray1<i64>) -> ArrayRef;
+        #[namespace = "array_duration_ns"]
+        fn from(v: Vec<i64>) -> ArrayRef;
+        #[namespace = "array_duration_ns"]
+        fn values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        #[namespace = "array_duration_ns"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        #[namespace = "array_duration_ns"]
+        fn values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
 
-        fn array_duration_ns_from(v: Vec<i64>) -> ArrayRef;
-        fn array_time64_ns_from(v: Vec<i64>) -> ArrayRef;
-        fn array_timestamp_ns_from(v: Vec<i64>) -> ArrayRef;
-        fn array_date32_from(v: Vec<i32>) -> ArrayRef;
-        fn array_date64_from(v: Vec<i64>) -> ArrayRef;
-        fn array_char_from(v: Vec<u8>) -> ArrayRef;
-        fn array_i32_from(v: Vec<i32>) -> ArrayRef;
-        fn array_i64_from(v: Vec<i64>) -> ArrayRef;
-        fn array_f32_from(v: Vec<f32>) -> ArrayRef;
-        fn array_f64_from(v: Vec<f64>) -> ArrayRef;
+        #[namespace = "array_time64_ns"]
+        fn from_ba(v: BigArray1<i64>) -> ArrayRef;
+        #[namespace = "array_time64_ns"]
+        fn from(v: Vec<i64>) -> ArrayRef;
+        #[namespace = "array_time64_ns"]
+        fn values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        #[namespace = "array_time64_ns"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        #[namespace = "array_time64_ns"]
+        fn values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
 
-        fn array_duration_ns_values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
-        fn array_time64_ns_values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
-        fn array_timestamp_ns_values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
-        fn array_date32_values(array: &ArrayRef, default: i32) -> Option<Vec<i32>>;
-        fn array_date64_values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
-        fn array_char_values(array: &ArrayRef, default: u8) -> Option<Vec<u8>>;
-        fn array_i32_values(array: &ArrayRef, default: i32) -> Option<Vec<i32>>;
-        fn array_i64_values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
-        fn array_f32_values(array: &ArrayRef, default: f32) -> Option<Vec<f32>>;
-        fn array_f64_values(array: &ArrayRef, default: f64) -> Option<Vec<f64>>;
+        #[namespace = "array_timestamp_ns"]
+        fn from_ba(v: BigArray1<i64>) -> ArrayRef;
+        #[namespace = "array_timestamp_ns"]
+        fn from(v: Vec<i64>) -> ArrayRef;
+        #[namespace = "array_timestamp_ns"]
+        fn values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        #[namespace = "array_timestamp_ns"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        #[namespace = "array_timestamp_ns"]
+        fn values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
 
-        fn array_duration_ns_values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
-        fn array_time64_ns_values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
-        fn array_timestamp_ns_values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
-        fn array_date32_values_opt(array: &ArrayRef) -> Option<Vec<Option<i32>>>;
-        fn array_date64_values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
-        fn array_i32_values_opt(array: &ArrayRef) -> Option<Vec<Option<i32>>>;
-        fn array_i64_values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
-        fn array_f32_values_opt(array: &ArrayRef) -> Option<Vec<Option<f32>>>;
-        fn array_f64_values_opt(array: &ArrayRef) -> Option<Vec<Option<f64>>>;
+        #[namespace = "array_date32"]
+        fn from_ba(v: BigArray1<i32>) -> ArrayRef;
+        #[namespace = "array_date32"]
+        fn from(v: Vec<i32>) -> ArrayRef;
+        #[namespace = "array_date32"]
+        fn values(array: &ArrayRef, default: i32) -> Option<Vec<i32>>;
+        #[namespace = "array_date32"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i32>>>;
+        #[namespace = "array_date32"]
+        fn values_ba(array: &ArrayRef, default: i32) -> Option<BigArray1<i32>>;
 
-        fn array_duration_ns_values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
-        fn array_time64_ns_values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
-        fn array_timestamp_ns_values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
-        fn array_date32_values_ba(array: &ArrayRef, default: i32) -> Option<BigArray1<i32>>;
-        fn array_date64_values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
-        fn array_char_values_ba(array: &ArrayRef, default: u8) -> Option<BigArray1<u8>>;
-        fn array_i32_values_ba(array: &ArrayRef, default: i32) -> Option<BigArray1<i32>>;
-        fn array_i64_values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
-        fn array_f32_values_ba(array: &ArrayRef, default: f32) -> Option<BigArray1<f32>>;
-        fn array_f64_values_ba(array: &ArrayRef, default: f64) -> Option<BigArray1<f64>>;
+        #[namespace = "array_date64"]
+        fn from_ba(v: BigArray1<i64>) -> ArrayRef;
+        #[namespace = "array_date64"]
+        fn from(v: Vec<i64>) -> ArrayRef;
+        #[namespace = "array_date64"]
+        fn values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        #[namespace = "array_date64"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        #[namespace = "array_date64"]
+        fn values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
+
+        #[namespace = "array_char"]
+        fn from_ba(v: BigArray1<u8>) -> ArrayRef;
+        #[namespace = "array_char"]
+        fn from(v: Vec<u8>) -> ArrayRef;
+        #[namespace = "array_char"]
+        fn values(array: &ArrayRef, default: u8) -> Option<Vec<u8>>;
+        #[namespace = "array_char"]
+        fn values_ba(array: &ArrayRef, default: u8) -> Option<BigArray1<u8>>;
+
+        #[namespace = "array_i32"]
+        fn from_ba(v: BigArray1<i32>) -> ArrayRef;
+        #[namespace = "array_i32"]
+        fn from(v: Vec<i32>) -> ArrayRef;
+        #[namespace = "array_i32"]
+        fn values(array: &ArrayRef, default: i32) -> Option<Vec<i32>>;
+        #[namespace = "array_i32"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i32>>>;
+        #[namespace = "array_i32"]
+        fn values_ba(array: &ArrayRef, default: i32) -> Option<BigArray1<i32>>;
+
+        #[namespace = "array_i64"]
+        fn from_ba(v: BigArray1<i64>) -> ArrayRef;
+        #[namespace = "array_i64"]
+        fn from(v: Vec<i64>) -> ArrayRef;
+        #[namespace = "array_i64"]
+        fn values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        #[namespace = "array_i64"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        #[namespace = "array_i64"]
+        fn values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
+
+        #[namespace = "array_f32"]
+        fn from_ba(v: BigArray1<f32>) -> ArrayRef;
+        #[namespace = "array_f32"]
+        fn from(v: Vec<f32>) -> ArrayRef;
+        #[namespace = "array_f32"]
+        fn values(array: &ArrayRef, default: f32) -> Option<Vec<f32>>;
+        #[namespace = "array_f32"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<f32>>>;
+        #[namespace = "array_f32"]
+        fn values_ba(array: &ArrayRef, default: f32) -> Option<BigArray1<f32>>;
+
+        #[namespace = "array_f64"]
+        fn from_ba(v: BigArray1<f64>) -> ArrayRef;
+        #[namespace = "array_f64"]
+        fn from(v: Vec<f64>) -> ArrayRef;
+        #[namespace = "array_f64"]
+        fn values(array: &ArrayRef, default: f64) -> Option<Vec<f64>>;
+        #[namespace = "array_f64"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<f64>>>;
+        #[namespace = "array_f64"]
+        fn values_ba(array: &ArrayRef, default: f64) -> Option<BigArray1<f64>>;
 
         fn array_timestamp_ns_from_with_zone(v: Vec<i64>, zone: Option<String>) -> ArrayRef;
 

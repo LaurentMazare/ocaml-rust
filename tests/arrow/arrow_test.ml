@@ -10,12 +10,12 @@ let ok_exn = function
 let test_record_batch ~array_len =
   let array_foo =
     Array.init array_len ~f:(fun i -> Float.of_int i |> Float.sqrt)
-    |> Arrow.array_f64_from
+    |> Arrow.Array_f64.from
   in
   let array_foo_ba =
     Array.init array_len ~f:(fun i -> 1. /. (1. +. Float.of_int i))
     |> Bigarray.Array1.of_array Float64 C_layout
-    |> Arrow.array_f64_from_ba
+    |> Arrow.Array_f64.from_ba
   in
   let array_bar =
     Array.init array_len ~f:(Printf.sprintf "b<%d>") |> Arrow.array_string_from
@@ -85,12 +85,12 @@ let%expect_test _ =
   in
   [%expect
     {| failed as expected, panicked at 'index out of bounds: the len is 3 but the index is 123' |}];
-  let column = (Arrow.record_batch_column rb 0 |> Arrow.array_i64_values) Int64.zero in
+  let column = (Arrow.record_batch_column rb 0 |> Arrow.Array_i64.values) Int64.zero in
   Stdio.printf "%s\n%!" ([%sexp_of: Int64.t array option] column |> Sexp.to_string_mach);
   [%expect {| () |}];
-  let column = (Arrow.record_batch_column rb 0 |> Arrow.array_f64_values) Float.nan in
+  let column = (Arrow.record_batch_column rb 0 |> Arrow.Array_f64.values) Float.nan in
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
-  let column = (Arrow.record_batch_column rb 1 |> Arrow.array_f64_values) Float.nan in
+  let column = (Arrow.record_batch_column rb 1 |> Arrow.Array_f64.values) Float.nan in
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
   let column = Arrow.record_batch_column rb 2 |> Arrow.array_string_values_opt in
   Stdio.printf
@@ -127,9 +127,9 @@ let%expect_test _ =
        ((name foo_ba) (data_type Float64) (nullable false))
        ((name bar) (data_type Utf8) (nullable false))))
      (metadata ())) |}];
-  let column = (Arrow.record_batch_column rb 0 |> Arrow.array_f64_values) Float.nan in
+  let column = (Arrow.record_batch_column rb 0 |> Arrow.Array_f64.values) Float.nan in
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
-  let column = (Arrow.record_batch_column rb 1 |> Arrow.array_f64_values) Float.nan in
+  let column = (Arrow.record_batch_column rb 1 |> Arrow.Array_f64.values) Float.nan in
   Stdio.printf "%s\n%!" ([%sexp_of: float array option] column |> Sexp.to_string_mach);
   let column = Arrow.record_batch_column rb 2 |> Arrow.array_string_values_opt in
   Stdio.printf

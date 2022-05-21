@@ -118,7 +118,7 @@ module Column = struct
     let span data =
       let data =
         Array.map data ~f:(fun sp -> Time_ns.Span.to_int_ns sp |> Int64.of_int_exn)
-        |> A.array_duration_ns_from
+        |> A.Array_duration_ns.from
       in
       { data; data_type = Span }
 
@@ -128,29 +128,29 @@ module Column = struct
             Time_ns.Ofday.to_span_since_start_of_day od
             |> Time_ns.Span.to_int_ns
             |> Int64.of_int_exn)
-        |> A.array_time64_ns_from
+        |> A.Array_time64_ns.from
       in
       { data; data_type = Ofday }
 
     let date data =
       let data =
         Array.map data ~f:(fun d -> Date.(diff d unix_epoch) |> Int32.of_int_exn)
-        |> A.array_date32_from
+        |> A.Array_date32.from
       in
       { data; data_type = Date }
 
     let int64 data =
-      { data = Array.map data ~f:Int64.of_int_exn |> A.array_i64_from; data_type = Int }
+      { data = Array.map data ~f:Int64.of_int_exn |> A.Array_i64.from; data_type = Int }
 
     let int32 data =
-      { data = Array.map data ~f:Int32.of_int_exn |> A.array_i32_from; data_type = Int }
+      { data = Array.map data ~f:Int32.of_int_exn |> A.Array_i32.from; data_type = Int }
 
-    let float64 data = { data = A.array_f64_from data; data_type = Float }
-    let float32 data = { data = A.array_f32_from data; data_type = Float }
-    let float64_ba d = { data = A.array_f64_from_ba d; data_type = Float }
-    let float32_ba d = { data = A.array_f32_from_ba d; data_type = Float }
-    let int64_ba d = { data = A.array_i64_from_ba d; data_type = Int }
-    let int32_ba d = { data = A.array_i32_from_ba d; data_type = Int }
+    let float64 data = { data = A.Array_f64.from data; data_type = Float }
+    let float32 data = { data = A.Array_f32.from data; data_type = Float }
+    let float64_ba d = { data = A.Array_f64.from_ba d; data_type = Float }
+    let float32_ba d = { data = A.Array_f32.from_ba d; data_type = Float }
+    let int64_ba d = { data = A.Array_i64.from_ba d; data_type = Int }
+    let int32_ba d = { data = A.Array_i32.from_ba d; data_type = Int }
   end
 
   let of_array (type a) (data_type : a Data_type.t) (data : a array) =
@@ -173,18 +173,18 @@ module Column = struct
     match A.array_data_type t.data, t.data_type with
     | Int32, Int ->
       let default = Option.value default ~default:0 |> Int32.of_int_exn in
-      Option.value_exn (A.array_i32_values t.data default)
+      Option.value_exn (A.Array_i32.values t.data default)
       |> Array.map ~f:Int32.to_int_exn
     | Int64, Int ->
       let default = Option.value default ~default:0 |> Int64.of_int_exn in
-      Option.value_exn (A.array_i64_values t.data default)
+      Option.value_exn (A.Array_i64.values t.data default)
       |> Array.map ~f:Int64.to_int_exn
     | Float32, Float ->
       let default = Option.value default ~default:Float.nan in
-      Option.value_exn (A.array_f32_values t.data default)
+      Option.value_exn (A.Array_f32.values t.data default)
     | Float64, Float ->
       let default = Option.value default ~default:Float.nan in
-      Option.value_exn (A.array_f64_values t.data default)
+      Option.value_exn (A.Array_f64.values t.data default)
     | Utf8, String ->
       let default = Option.value default ~default:"" in
       Option.value_exn (A.array_string_values t.data default)
@@ -198,7 +198,7 @@ module Column = struct
           ~f:(fun d -> Date.(diff d unix_epoch) |> Int32.of_int_exn)
           ~default:Int32.zero
       in
-      Option.value_exn (A.array_date32_values t.data default)
+      Option.value_exn (A.Array_date32.values t.data default)
       |> Array.map ~f:(fun d -> Int32.to_int_exn d |> Date.(add_days unix_epoch))
     | Time64 time_unit, Ofday ->
       let time_unit_mult = time_unit_mult time_unit in
@@ -211,7 +211,7 @@ module Column = struct
             |> fun v -> v / time_unit_mult |> Int64.of_int_exn)
           ~default:Int64.zero
       in
-      Option.value_exn (A.array_time64_ns_values t.data default)
+      Option.value_exn (A.Array_time64_ns.values t.data default)
       |> Array.map ~f:(fun d ->
              Int64.to_int_exn d * time_unit_mult
              |> Time_ns.Span.of_int_ns
@@ -225,7 +225,7 @@ module Column = struct
             Time_ns.Span.to_int_ns sp |> fun v -> v / time_unit_mult |> Int64.of_int_exn)
           ~default:Int64.zero
       in
-      Option.value_exn (A.array_time64_ns_values t.data default)
+      Option.value_exn (A.Array_time64_ns.values t.data default)
       |> Array.map ~f:(fun d ->
              Int64.to_int_exn d * time_unit_mult |> Time_ns.Span.of_int_ns)
     | Timestamp (time_unit, _zone), Time ->
@@ -237,7 +237,7 @@ module Column = struct
             Time_ns.to_int_ns_since_epoch ts / time_unit_mult |> Int64.of_int_exn)
           ~default:Int64.zero
       in
-      Option.value_exn (A.array_timestamp_ns_values t.data default)
+      Option.value_exn (A.Array_timestamp_ns.values t.data default)
       |> Array.map ~f:(fun ts ->
              Int64.to_int_exn ts * time_unit_mult |> Time_ns.of_int_ns_since_epoch)
     | data_type, _data_type ->
@@ -246,22 +246,22 @@ module Column = struct
   let to_array_opt (type a) (t : a t) : a option array =
     match A.array_data_type t.data, t.data_type with
     | Int32, Int ->
-      Option.value_exn (A.array_i32_values_opt t.data)
+      Option.value_exn (A.Array_i32.values_opt t.data)
       |> Array.map ~f:(Option.map ~f:Int32.to_int_exn)
     | Int64, Int ->
-      Option.value_exn (A.array_i64_values_opt t.data)
+      Option.value_exn (A.Array_i64.values_opt t.data)
       |> Array.map ~f:(Option.map ~f:Int64.to_int_exn)
-    | Float32, Float -> Option.value_exn (A.array_f32_values_opt t.data)
-    | Float64, Float -> Option.value_exn (A.array_f64_values_opt t.data)
+    | Float32, Float -> Option.value_exn (A.Array_f32.values_opt t.data)
+    | Float64, Float -> Option.value_exn (A.Array_f64.values_opt t.data)
     | Utf8, String -> Option.value_exn (A.array_string_values_opt t.data)
     | LargeUtf8, String -> Option.value_exn (A.array_large_string_values_opt t.data)
     | Date32, Date ->
-      Option.value_exn (A.array_date32_values_opt t.data)
+      Option.value_exn (A.Array_date32.values_opt t.data)
       |> Array.map
            ~f:(Option.map ~f:(fun d -> Int32.to_int_exn d |> Date.(add_days unix_epoch)))
     | Time64 time_unit, Ofday ->
       let time_unit_mult = time_unit_mult time_unit in
-      Option.value_exn (A.array_time64_ns_values_opt t.data)
+      Option.value_exn (A.Array_time64_ns.values_opt t.data)
       |> Array.map
            ~f:
              (Option.map ~f:(fun d ->
@@ -270,14 +270,14 @@ module Column = struct
                   |> Time_ns.Ofday.of_span_since_start_of_day_exn))
     | Duration time_unit, Span ->
       let time_unit_mult = time_unit_mult time_unit in
-      Option.value_exn (A.array_time64_ns_values_opt t.data)
+      Option.value_exn (A.Array_time64_ns.values_opt t.data)
       |> Array.map
            ~f:
              (Option.map ~f:(fun d ->
                   Int64.to_int_exn d * time_unit_mult |> Time_ns.Span.of_int_ns))
     | Timestamp (time_unit, _zone), Time ->
       let time_unit_mult = time_unit_mult time_unit in
-      Option.value_exn (A.array_timestamp_ns_values_opt t.data)
+      Option.value_exn (A.Array_timestamp_ns.values_opt t.data)
       |> Array.map
            ~f:
              (Option.map ~f:(fun ts ->
@@ -307,13 +307,13 @@ module Column = struct
     let get (P t) =
       match A.array_data_type t.data with
       | Int32 ->
-        A.array_i32_values_ba t.data Int32.zero |> Option.map ~f:(fun ba -> Int32 ba)
+        A.Array_i32.values_ba t.data Int32.zero |> Option.map ~f:(fun ba -> Int32 ba)
       | Int64 ->
-        A.array_i64_values_ba t.data Int64.zero |> Option.map ~f:(fun ba -> Int64 ba)
+        A.Array_i64.values_ba t.data Int64.zero |> Option.map ~f:(fun ba -> Int64 ba)
       | Float32 ->
-        A.array_f32_values_ba t.data Float.nan |> Option.map ~f:(fun ba -> Float32 ba)
+        A.Array_f32.values_ba t.data Float.nan |> Option.map ~f:(fun ba -> Float32 ba)
       | Float64 ->
-        A.array_f64_values_ba t.data Float.nan |> Option.map ~f:(fun ba -> Float64 ba)
+        A.Array_f64.values_ba t.data Float.nan |> Option.map ~f:(fun ba -> Float64 ba)
       | _ -> None
   end
 end
