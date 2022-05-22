@@ -33,3 +33,21 @@ pub fn initial_setup() {
         }))
     });
 }
+
+/// A struct to represent having released the OCaml runtime lock. The
+/// drop implementation guarantees acquiring the lock back at the end
+/// of the scope.
+pub struct RuntimeLock {}
+
+impl RuntimeLock {
+    pub fn release() -> Self {
+        unsafe { ocaml_sys::caml_enter_blocking_section() };
+        RuntimeLock {}
+    }
+}
+
+impl Drop for RuntimeLock {
+    fn drop(&mut self) {
+        unsafe { ocaml_sys::caml_leave_blocking_section() };
+    }
+}
