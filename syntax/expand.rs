@@ -361,13 +361,22 @@ impl Api {
                                         quote! { #(#namespace)::*::#ident }
                                     }
                                 };
+                                let maybe_release_runtime_lock = if attrs.release_runtime_lock {
+                                    quote! { let _release = ocaml_rust::RuntimeLock::release(); }
+                                } else {
+                                    quote! {}
+                                };
                                 expanded.extend(quote! {
                                 #[no_mangle]
                                 pub extern "C" fn #ocaml_ident(#(#arg_with_types),*) -> ocaml_sys::Value {
                                     ocaml_rust::initial_setup();
                                     #(#args_conv)*;
+                                    let mut res: #output;
                                     #[allow(clippy::unnecessary_mut_passed)]
-                                    let res: #output = #namespace_ident(#(#args),*);
+                                    {
+                                        #maybe_release_runtime_lock
+                                        res = #namespace_ident(#(#args),*);
+                                    }
                                     <#output as ocaml_rust::to_value::ToValue>::to_value(&res)
                                 } })
                             }

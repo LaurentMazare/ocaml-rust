@@ -200,20 +200,24 @@ impl Parse for Namespace {
 
 pub struct Attrs {
     pub namespace: Option<Vec<String>>,
+    pub release_runtime_lock: bool,
 }
 
 impl Attrs {
     fn parse(attrs: Vec<Attribute>) -> Result<Self> {
         let mut namespace = None;
+        let mut release_runtime_lock = false;
         for attr in attrs.into_iter() {
             if attr.path.is_ident("namespace") {
                 let value: Namespace = syn::parse2(attr.tokens)?;
                 namespace = Some(value.0.split("::").map(String::from).collect())
+            } else if attr.path.is_ident("release_runtime_lock") {
+                release_runtime_lock = true;
             } else {
                 return Err(Error::new_spanned(attr, "unsupported attribute"));
             }
         }
-        Ok(Attrs { namespace })
+        Ok(Attrs { namespace, release_runtime_lock })
     }
 }
 
