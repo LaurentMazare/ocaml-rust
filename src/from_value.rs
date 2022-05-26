@@ -153,55 +153,38 @@ where
     }
 }
 
-impl FromSysValue for Vec<f32> {
-    unsafe fn from_value(v: ocaml_sys::Value) -> Self {
-        let tag = ocaml_sys::tag_val(v);
-        if tag == 0 {
-            let len = ocaml_sys::wosize_val(v);
-            let mut vs = Vec::new();
-            for idx in 0..len {
-                let t = ocaml_sys::field(v, idx);
-                vs.push(FromSysValue::from_value(*t));
+// We use a macro rather than a trait to define FromSysValue for
+// Vec<f32> and Vec<f64> as a trait would conflict with NotF64.
+macro_rules! vec_float {
+    ($ty:ty) => {
+        impl FromSysValue for Vec<$ty> {
+            unsafe fn from_value(v: ocaml_sys::Value) -> Self {
+                let tag = ocaml_sys::tag_val(v);
+                if tag == 0 {
+                    let len = ocaml_sys::wosize_val(v);
+                    let mut vs = Vec::new();
+                    for idx in 0..len {
+                        let t = ocaml_sys::field(v, idx);
+                        vs.push(FromSysValue::from_value(*t));
+                    }
+                    vs
+                } else if tag == ocaml_sys::DOUBLE_ARRAY {
+                    let len = ocaml_sys::wosize_val(v);
+                    let mut vs = Vec::new();
+                    for idx in 0..len {
+                        let t = ocaml_sys::field(v, idx);
+                        vs.push(*(t as *const f64) as $ty)
+                    }
+                    vs
+                } else {
+                    panic!("unexpected tag for double array, {}", tag)
+                }
             }
-            vs
-        } else if tag == ocaml_sys::DOUBLE_ARRAY {
-            let len = ocaml_sys::wosize_val(v);
-            let mut vs = Vec::new();
-            for idx in 0..len {
-                let t = ocaml_sys::field(v, idx);
-                vs.push(*(t as *const f64) as f32)
-            }
-            vs
-        } else {
-            panic!("unexpected tag for double array, {}", tag)
         }
-    }
+    };
 }
-
-impl FromSysValue for Vec<f64> {
-    unsafe fn from_value(v: ocaml_sys::Value) -> Self {
-        let tag = ocaml_sys::tag_val(v);
-        if tag == 0 {
-            let len = ocaml_sys::wosize_val(v);
-            let mut vs = Vec::new();
-            for idx in 0..len {
-                let t = ocaml_sys::field(v, idx);
-                vs.push(FromSysValue::from_value(*t));
-            }
-            vs
-        } else if tag == ocaml_sys::DOUBLE_ARRAY {
-            let len = ocaml_sys::wosize_val(v);
-            let mut vs = Vec::new();
-            for idx in 0..len {
-                let t = ocaml_sys::field(v, idx);
-                vs.push(*(t as *const f64))
-            }
-            vs
-        } else {
-            panic!("unexpected tag for double array, {}", tag)
-        }
-    }
-}
+vec_float!(f32);
+vec_float!(f64);
 
 // The need for this hack will be removed once trait specialization
 // is stable.
