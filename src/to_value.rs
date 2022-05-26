@@ -101,9 +101,33 @@ where
     }
 }
 
+impl ToValue for Vec<f64> {
+    fn to_value(&self) -> ocaml_sys::Value {
+        let len = self.len();
+        let rv: RootedValue<()> =
+            RootedValue::create(unsafe { ocaml_sys::caml_alloc_float_array(len) });
+        for (i, &v) in self.iter().enumerate() {
+            unsafe { ocaml_sys::caml_sys_store_double_field(rv.value().value, i, v) }
+        }
+        rv.value().value
+    }
+}
+
+impl ToValue for Vec<f32> {
+    fn to_value(&self) -> ocaml_sys::Value {
+        let len = self.len();
+        let rv: RootedValue<()> =
+            RootedValue::create(unsafe { ocaml_sys::caml_alloc_float_array(len) });
+        for (i, &v) in self.iter().enumerate() {
+            unsafe { ocaml_sys::caml_sys_store_double_field(rv.value().value, i, v as f64) }
+        }
+        rv.value().value
+    }
+}
+
 impl<T> ToValue for Vec<T>
 where
-    T: ToValue,
+    T: ToValue + crate::from_value::NotF64,
 {
     fn to_value(&self) -> ocaml_sys::Value {
         let len = self.len();
