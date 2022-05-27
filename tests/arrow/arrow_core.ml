@@ -414,6 +414,8 @@ module Reader = struct
     ; file_reader : A.file_reader
     }
 
+  let parquet_metadata t = A.file_reader_parquet_metadata t.file_reader
+
   let create ?column_names filename ~batch_size =
     A.file_reader filename
     >>= fun file_reader ->

@@ -108,6 +108,7 @@ module Reader : sig
 
   val create : ?column_names:string list -> string -> batch_size:int -> t result
   val schema : t -> Schema.t result
+  val parquet_metadata : t -> A.metadata result
   val next : t -> [ `Eof | `Batch of Record_batch.t result ]
   val close : t -> unit
 
