@@ -564,7 +564,7 @@ dependencies = [
  "libc",
  "ocaml-boxroot-sys",
  "ocaml-rust-macro",
- "ocaml-sys 0.23.0",
+ "ocaml-sys",
  "thiserror",
 ]
 
@@ -574,7 +574,7 @@ version = "0.0.1"
 dependencies = [
  "arrow",
  "ocaml-rust",
- "ocaml-sys 0.22.3",
+ "ocaml-sys",
  "parquet",
 ]
 
@@ -594,7 +594,7 @@ name = "ocaml-rust-example"
 version = "0.0.1"
 dependencies = [
  "ocaml-rust",
- "ocaml-sys 0.22.3",
+ "ocaml-sys",
 ]
 
 [[package]]
@@ -609,17 +609,9 @@ dependencies = [
 
 [[package]]
 name = "ocaml-sys"
-version = "0.22.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "73ec6ca7d41458442627435afb8f4671e83fd642e8a560171d671a1f679aa3cf"
-dependencies = [
- "cty",
-]
-
-[[package]]
-name = "ocaml-sys"
 version = "0.23.0"
-source = "git+https://github.com/zshipko/ocaml-rs?rev=45b30c14e4897d6ec12593493cdf661f3c512f82#45b30c14e4897d6ec12593493cdf661f3c512f82"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc814766094de5f0f1c7e027027eb05c603cd7e235cc04ae195185fddecc1285"
 dependencies = [
  "cc",
  "cty",

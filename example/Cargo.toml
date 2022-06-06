@@ -10,4 +10,4 @@ crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
 ocaml-rust = "0.0.1"
-ocaml-sys = "0.22.3"
+ocaml-sys = "0.23.0"
