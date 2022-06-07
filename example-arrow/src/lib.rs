@@ -63,7 +63,7 @@ fn file_reader_parquet_metadata(reader: &FileReader) -> RustResult<Metadata> {
     let metadata = Metadata {
         num_rows: f.num_rows() as isize,
         version: f.version() as isize,
-        created_by: f.created_by().clone(),
+        created_by: f.created_by().map(|x| x.to_string()),
         row_groups,
     };
     Ok(metadata)
@@ -89,7 +89,11 @@ fn get_record_reader_by_columns(
 ) -> RustResult<RecordReader> {
     let mut reader = reader.inner().lock().unwrap();
     let reader = reader.as_mut().map_or_else(|| Err("already closed"), Ok)?;
-    let reader = reader.get_record_reader_by_columns(columns.into_iter(), batch_size)?;
+    let metadata = reader.get_metadata();
+    let f = metadata.file_metadata();
+    let schema_descr = f.schema_descr();
+    let mask = parquet::arrow::ProjectionMask::leaves(&schema_descr, columns.into_iter());
+    let reader = reader.get_record_reader_by_columns(mask, batch_size)?;
     Ok(Custom::new(Some(reader)))
 }
 
@@ -198,11 +202,12 @@ fn writer_new(record_batch: &RecordBatch, path: String) -> RustResult<FileWriter
 
     let mut writer = ArrowWriter::try_new(file, record_batch.schema(), Some(props))?;
     writer.write(record_batch)?;
-    Ok(Custom::new(writer))
+    Ok(Custom::new(Some(writer)))
 }
 
 fn writer_write(w: &FileWriter, record_batch: &RecordBatch) -> RustResult<()> {
     let mut w = w.inner().lock().unwrap();
+    let w = w.as_mut().map_or_else(|| Err("already closed"), Ok)?;
     let record_batch = record_batch.inner();
     w.write(record_batch)?;
     Ok(())
@@ -210,7 +215,9 @@ fn writer_write(w: &FileWriter, record_batch: &RecordBatch) -> RustResult<()> {
 
 fn writer_close(w: &FileWriter) -> RustResult<()> {
     let mut w = w.inner().lock().unwrap();
-    let _metadata = w.close()?;
+    if let Some(w) = std::mem::replace(&mut *w, None) {
+        let _metadata = w.close()?;
+    }
     Ok(())
 }
 
@@ -451,7 +458,7 @@ impl DataType {
             DT::FixedSizeList(_, _) => Self::FixedSizeList,
             DT::LargeList(_) => Self::LargeList,
             DT::Struct(_) => Self::Struct,
-            DT::Union(_, _) => Self::Union,
+            DT::Union(..) => Self::Union,
             DT::Dictionary(d1, d2) => {
                 let d1 = Box::new(Self::of_arrow(d1));
                 let d2 = Box::new(Self::of_arrow(d2));
@@ -467,7 +474,7 @@ impl DataType {
 mod arrow {
     ocaml_include!("open! Sexplib.Conv");
     type FileReader = Custom<Option<ParquetFileArrowReader>>;
-    type FileWriter = Custom<ArrowWriter<std::fs::File>>;
+    type FileWriter = Custom<Option<ArrowWriter<std::fs::File>>>;
     type CsvFileReader = Custom<Option<ArrowCsvReader<std::fs::File>>>;
     type CsvFileWriter = Custom<Option<ArrowCsvWriter<std::fs::File>>>;
     type RecordReader = Custom<Option<ParquetRecordBatchReader>>;

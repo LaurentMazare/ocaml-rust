@@ -11,5 +11,5 @@ crate-type = ["staticlib", "cdylib"]
 [dependencies]
 ocaml-rust = "0.0.1"
 ocaml-sys = "0.23.0"
-arrow = "12.0.0"
-parquet = "12.0.0"
+arrow = "15.0.0"
+parquet = "15.0.0"
