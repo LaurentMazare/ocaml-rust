@@ -334,6 +334,33 @@ module Array_date64 = struct
   ;;
 
 end
+module Array_duration_ms = struct
+  external from_ba
+    : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
+    = "__ocaml_arrowarray_duration_ms__from_ba"
+  ;;
+
+  external from
+    : Int64.t array -> array_ref
+    = "__ocaml_arrowarray_duration_ms__from"
+  ;;
+
+  external values
+    : array_ref -> Int64.t -> Int64.t array option
+    = "__ocaml_arrowarray_duration_ms__values"
+  ;;
+
+  external values_opt
+    : array_ref -> Int64.t option array option
+    = "__ocaml_arrowarray_duration_ms__values_opt"
+  ;;
+
+  external values_ba
+    : array_ref -> Int64.t -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
+    = "__ocaml_arrowarray_duration_ms__values_ba"
+  ;;
+
+end
 module Array_duration_ns = struct
   external from_ba
     : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
@@ -358,6 +385,60 @@ module Array_duration_ns = struct
   external values_ba
     : array_ref -> Int64.t -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrowarray_duration_ns__values_ba"
+  ;;
+
+end
+module Array_duration_s = struct
+  external from_ba
+    : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
+    = "__ocaml_arrowarray_duration_s__from_ba"
+  ;;
+
+  external from
+    : Int64.t array -> array_ref
+    = "__ocaml_arrowarray_duration_s__from"
+  ;;
+
+  external values
+    : array_ref -> Int64.t -> Int64.t array option
+    = "__ocaml_arrowarray_duration_s__values"
+  ;;
+
+  external values_opt
+    : array_ref -> Int64.t option array option
+    = "__ocaml_arrowarray_duration_s__values_opt"
+  ;;
+
+  external values_ba
+    : array_ref -> Int64.t -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
+    = "__ocaml_arrowarray_duration_s__values_ba"
+  ;;
+
+end
+module Array_duration_us = struct
+  external from_ba
+    : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
+    = "__ocaml_arrowarray_duration_us__from_ba"
+  ;;
+
+  external from
+    : Int64.t array -> array_ref
+    = "__ocaml_arrowarray_duration_us__from"
+  ;;
+
+  external values
+    : array_ref -> Int64.t -> Int64.t array option
+    = "__ocaml_arrowarray_duration_us__values"
+  ;;
+
+  external values_opt
+    : array_ref -> Int64.t option array option
+    = "__ocaml_arrowarray_duration_us__values_opt"
+  ;;
+
+  external values_ba
+    : array_ref -> Int64.t -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
+    = "__ocaml_arrowarray_duration_us__values_ba"
   ;;
 
 end

@@ -350,6 +350,9 @@ macro_rules! value_fns {
 }
 
 value_fns!(array_duration_ns, i64, DurationNanosecondArray);
+value_fns!(array_duration_us, i64, DurationMicrosecondArray);
+value_fns!(array_duration_ms, i64, DurationMillisecondArray);
+value_fns!(array_duration_s, i64, DurationSecondArray);
 value_fns!(array_time64_ns, i64, Time64NanosecondArray);
 value_fns!(array_time64_us, i64, Time64MicrosecondArray);
 value_fns!(array_timestamp_ns, i64, TimestampNanosecondArray);
@@ -632,6 +635,39 @@ mod arrow {
         #[namespace = "array_duration_ns"]
         fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
         #[namespace = "array_duration_ns"]
+        fn values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
+
+        #[namespace = "array_duration_us"]
+        fn from_ba(v: BigArray1<i64>) -> ArrayRef;
+        #[namespace = "array_duration_us"]
+        fn from(v: Vec<i64>) -> ArrayRef;
+        #[namespace = "array_duration_us"]
+        fn values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        #[namespace = "array_duration_us"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        #[namespace = "array_duration_us"]
+        fn values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
+
+        #[namespace = "array_duration_ms"]
+        fn from_ba(v: BigArray1<i64>) -> ArrayRef;
+        #[namespace = "array_duration_ms"]
+        fn from(v: Vec<i64>) -> ArrayRef;
+        #[namespace = "array_duration_ms"]
+        fn values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        #[namespace = "array_duration_ms"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        #[namespace = "array_duration_ms"]
+        fn values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
+
+        #[namespace = "array_duration_s"]
+        fn from_ba(v: BigArray1<i64>) -> ArrayRef;
+        #[namespace = "array_duration_s"]
+        fn from(v: Vec<i64>) -> ArrayRef;
+        #[namespace = "array_duration_s"]
+        fn values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        #[namespace = "array_duration_s"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        #[namespace = "array_duration_s"]
         fn values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
 
         #[namespace = "array_time64_ns"]

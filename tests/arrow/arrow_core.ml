@@ -211,7 +211,14 @@ module Column = struct
             |> fun v -> v / time_unit_mult |> Int64.of_int_exn)
           ~default:Int64.zero
       in
-      Option.value_exn (A.Array_time64_ns.values t.data default)
+      let array =
+        match time_unit with
+        | Nanosecond -> A.Array_time64_ns.values t.data default
+        | Microsecond -> A.Array_time64_us.values t.data default
+        | Millisecond -> failwith "unexpected millisecond unit for time64"
+        | Second -> failwith "unexpected second unit for time64"
+      in
+      Option.value_exn array
       |> Array.map ~f:(fun d ->
              Int64.to_int_exn d * time_unit_mult
              |> Time_ns.Span.of_int_ns
@@ -227,10 +234,10 @@ module Column = struct
       in
       let array =
         match time_unit with
-        | Nanosecond -> A.Array_time64_ns.values t.data default
-        | Microsecond -> A.Array_time64_us.values t.data default
-        | Millisecond -> failwith "unexpected millisecond unit for time64"
-        | Second -> failwith "unexpected second unit for time64"
+        | Nanosecond -> A.Array_duration_ns.values t.data default
+        | Microsecond -> A.Array_duration_us.values t.data default
+        | Millisecond -> A.Array_duration_ms.values t.data default
+        | Second -> A.Array_duration_s.values t.data default
       in
       Option.value_exn array
       |> Array.map ~f:(fun d ->
@@ -291,7 +298,14 @@ module Column = struct
                   |> Time_ns.Ofday.of_span_since_start_of_day_exn))
     | Duration time_unit, Span ->
       let time_unit_mult = time_unit_mult time_unit in
-      Option.value_exn (A.Array_time64_ns.values_opt t.data)
+      let array =
+        match time_unit with
+        | Nanosecond -> A.Array_duration_ns.values_opt t.data
+        | Microsecond -> A.Array_duration_us.values_opt t.data
+        | Millisecond -> A.Array_duration_ms.values_opt t.data
+        | Second -> A.Array_duration_s.values_opt t.data
+      in
+      Option.value_exn array
       |> Array.map
            ~f:
              (Option.map ~f:(fun d ->
