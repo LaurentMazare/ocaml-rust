@@ -237,7 +237,14 @@ module Column = struct
             Time_ns.to_int_ns_since_epoch ts / time_unit_mult |> Int64.of_int_exn)
           ~default:Int64.zero
       in
-      Option.value_exn (A.Array_timestamp_ns.values t.data default)
+      let array =
+        match time_unit with
+        | Nanosecond -> A.Array_timestamp_ns.values t.data default
+        | Microsecond -> A.Array_timestamp_us.values t.data default
+        | Millisecond -> A.Array_timestamp_ms.values t.data default
+        | Second -> A.Array_timestamp_s.values t.data default
+      in
+      Option.value_exn array
       |> Array.map ~f:(fun ts ->
              Int64.to_int_exn ts * time_unit_mult |> Time_ns.of_int_ns_since_epoch)
     | data_type, _data_type ->
@@ -277,7 +284,14 @@ module Column = struct
                   Int64.to_int_exn d * time_unit_mult |> Time_ns.Span.of_int_ns))
     | Timestamp (time_unit, _zone), Time ->
       let time_unit_mult = time_unit_mult time_unit in
-      Option.value_exn (A.Array_timestamp_ns.values_opt t.data)
+      let array =
+        match time_unit with
+        | Nanosecond -> A.Array_timestamp_ns.values_opt t.data
+        | Microsecond -> A.Array_timestamp_us.values_opt t.data
+        | Millisecond -> A.Array_timestamp_ms.values_opt t.data
+        | Second -> A.Array_timestamp_s.values_opt t.data
+      in
+      Option.value_exn array
       |> Array.map
            ~f:
              (Option.map ~f:(fun ts ->

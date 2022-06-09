@@ -496,6 +496,33 @@ module Array_time64_ns = struct
   ;;
 
 end
+module Array_timestamp_ms = struct
+  external from_ba
+    : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
+    = "__ocaml_arrowarray_timestamp_ms__from_ba"
+  ;;
+
+  external from
+    : Int64.t array -> array_ref
+    = "__ocaml_arrowarray_timestamp_ms__from"
+  ;;
+
+  external values
+    : array_ref -> Int64.t -> Int64.t array option
+    = "__ocaml_arrowarray_timestamp_ms__values"
+  ;;
+
+  external values_opt
+    : array_ref -> Int64.t option array option
+    = "__ocaml_arrowarray_timestamp_ms__values_opt"
+  ;;
+
+  external values_ba
+    : array_ref -> Int64.t -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
+    = "__ocaml_arrowarray_timestamp_ms__values_ba"
+  ;;
+
+end
 module Array_timestamp_ns = struct
   external from_ba
     : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
@@ -520,6 +547,60 @@ module Array_timestamp_ns = struct
   external values_ba
     : array_ref -> Int64.t -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
     = "__ocaml_arrowarray_timestamp_ns__values_ba"
+  ;;
+
+end
+module Array_timestamp_s = struct
+  external from_ba
+    : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
+    = "__ocaml_arrowarray_timestamp_s__from_ba"
+  ;;
+
+  external from
+    : Int64.t array -> array_ref
+    = "__ocaml_arrowarray_timestamp_s__from"
+  ;;
+
+  external values
+    : array_ref -> Int64.t -> Int64.t array option
+    = "__ocaml_arrowarray_timestamp_s__values"
+  ;;
+
+  external values_opt
+    : array_ref -> Int64.t option array option
+    = "__ocaml_arrowarray_timestamp_s__values_opt"
+  ;;
+
+  external values_ba
+    : array_ref -> Int64.t -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
+    = "__ocaml_arrowarray_timestamp_s__values_ba"
+  ;;
+
+end
+module Array_timestamp_us = struct
+  external from_ba
+    : (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t -> array_ref
+    = "__ocaml_arrowarray_timestamp_us__from_ba"
+  ;;
+
+  external from
+    : Int64.t array -> array_ref
+    = "__ocaml_arrowarray_timestamp_us__from"
+  ;;
+
+  external values
+    : array_ref -> Int64.t -> Int64.t array option
+    = "__ocaml_arrowarray_timestamp_us__values"
+  ;;
+
+  external values_opt
+    : array_ref -> Int64.t option array option
+    = "__ocaml_arrowarray_timestamp_us__values_opt"
+  ;;
+
+  external values_ba
+    : array_ref -> Int64.t -> (int, Bigarray.int64_elt, Bigarray.c_layout) Bigarray.Array1.t option
+    = "__ocaml_arrowarray_timestamp_us__values_ba"
   ;;
 
 end
