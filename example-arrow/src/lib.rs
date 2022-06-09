@@ -351,6 +351,7 @@ macro_rules! value_fns {
 
 value_fns!(array_duration_ns, i64, DurationNanosecondArray);
 value_fns!(array_time64_ns, i64, Time64NanosecondArray);
+value_fns!(array_time64_us, i64, Time64MicrosecondArray);
 value_fns!(array_timestamp_ns, i64, TimestampNanosecondArray);
 value_fns!(array_timestamp_us, i64, TimestampMicrosecondArray);
 value_fns!(array_timestamp_ms, i64, TimestampMillisecondArray);
@@ -642,6 +643,17 @@ mod arrow {
         #[namespace = "array_time64_ns"]
         fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
         #[namespace = "array_time64_ns"]
+        fn values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
+
+        #[namespace = "array_time64_us"]
+        fn from_ba(v: BigArray1<i64>) -> ArrayRef;
+        #[namespace = "array_time64_us"]
+        fn from(v: Vec<i64>) -> ArrayRef;
+        #[namespace = "array_time64_us"]
+        fn values(array: &ArrayRef, default: i64) -> Option<Vec<i64>>;
+        #[namespace = "array_time64_us"]
+        fn values_opt(array: &ArrayRef) -> Option<Vec<Option<i64>>>;
+        #[namespace = "array_time64_us"]
         fn values_ba(array: &ArrayRef, default: i64) -> Option<BigArray1<i64>>;
 
         #[namespace = "array_timestamp_ns"]

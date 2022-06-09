@@ -225,7 +225,14 @@ module Column = struct
             Time_ns.Span.to_int_ns sp |> fun v -> v / time_unit_mult |> Int64.of_int_exn)
           ~default:Int64.zero
       in
-      Option.value_exn (A.Array_time64_ns.values t.data default)
+      let array =
+        match time_unit with
+        | Nanosecond -> A.Array_time64_ns.values t.data default
+        | Microsecond -> A.Array_time64_us.values t.data default
+        | Millisecond -> failwith "unexpected millisecond unit for time64"
+        | Second -> failwith "unexpected second unit for time64"
+      in
+      Option.value_exn array
       |> Array.map ~f:(fun d ->
              Int64.to_int_exn d * time_unit_mult |> Time_ns.Span.of_int_ns)
     | Timestamp (time_unit, _zone), Time ->
@@ -268,7 +275,14 @@ module Column = struct
            ~f:(Option.map ~f:(fun d -> Int32.to_int_exn d |> Date.(add_days unix_epoch)))
     | Time64 time_unit, Ofday ->
       let time_unit_mult = time_unit_mult time_unit in
-      Option.value_exn (A.Array_time64_ns.values_opt t.data)
+      let array =
+        match time_unit with
+        | Nanosecond -> A.Array_time64_ns.values_opt t.data
+        | Microsecond -> A.Array_time64_us.values_opt t.data
+        | Millisecond -> failwith "unexpected millisecond unit for time64"
+        | Second -> failwith "unexpected second unit for time64"
+      in
+      Option.value_exn array
       |> Array.map
            ~f:
              (Option.map ~f:(fun d ->
