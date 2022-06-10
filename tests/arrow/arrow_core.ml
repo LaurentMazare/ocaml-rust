@@ -39,6 +39,7 @@ module Data_type = struct
     | Ofday : Time_ns.Ofday.t t
     | Span : Time_ns.Span.t t
     | String : string t
+    | Null : unit t
   [@@deriving sexp_of]
 
   let sexp_of t = sexp_of_t (fun _ -> Sexp.List []) t
@@ -52,6 +53,7 @@ module Data_type = struct
     | Ofday, Ofday -> Some T
     | Span, Span -> Some T
     | String, String -> Some T
+    | Null, Null -> Some T
     | _ -> None
 
   let equal (type a b) (t1 : a t) (t2 : b t) = equal_ t1 t2 |> Option.is_some
@@ -162,6 +164,7 @@ module Column = struct
     | Ofday -> C.ofday data
     | Span -> C.span data
     | String -> C.string data
+    | Null -> { data = Array.length data |> A.array_null; data_type = Null }
 
   let time_unit_mult : A.time_unit -> int = function
     | Second -> 1_000_000_000
@@ -261,6 +264,7 @@ module Column = struct
       Option.value_exn array
       |> Array.map ~f:(fun ts ->
              Int64.to_int_exn ts * time_unit_mult |> Time_ns.of_int_ns_since_epoch)
+    | Null, Null -> Array.create () ~len:(A.array_len t.data)
     | data_type, _data_type ->
       [%message "unsupported data type" (data_type : A.data_type)] |> raise_s
 
@@ -324,6 +328,7 @@ module Column = struct
            ~f:
              (Option.map ~f:(fun ts ->
                   Int64.to_int_exn ts * time_unit_mult |> Time_ns.of_int_ns_since_epoch))
+    | Null, Null -> Array.create None ~len:(A.array_len t.data)
     | data_type, _data_type ->
       [%message "unsupported data type" (data_type : A.data_type)] |> raise_s
 
@@ -336,6 +341,7 @@ module Column = struct
     | Ofday -> to_array t |> [%sexp_of: Time_ns.Ofday.t array]
     | Span -> to_array t |> [%sexp_of: Time_ns.Span.t array]
     | String -> to_array t |> [%sexp_of: string array]
+    | Null -> to_array t |> [%sexp_of: unit array]
 
   let sexp_of_packed (P t) = sexp_of t
 

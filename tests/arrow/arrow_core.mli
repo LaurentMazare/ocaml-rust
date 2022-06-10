@@ -25,6 +25,7 @@ module Data_type : sig
     | Ofday : Time_ns.Ofday.t t
     | Span : Time_ns.Span.t t
     | String : string t
+    | Null : unit t
   [@@deriving sexp_of]
 
   val equal : _ t -> _ t -> bool

@@ -367,6 +367,11 @@ value_fns!(array_i64, i64, Int64Array);
 value_fns!(array_f32, f32, Float32Array);
 value_fns!(array_f64, f64, Float64Array);
 
+fn array_null(size: usize) -> ArrayRef {
+    let array = arrow::array::NullArray::new(size);
+    CustomConst::new(Arc::new(array))
+}
+
 fn array_timestamp_ns_from_with_zone(vec: Vec<i64>, zone: Option<String>) -> ArrayRef {
     let array: TimestampNanosecondArray = arrow::array::PrimitiveArray::from_vec(vec, zone);
     CustomConst::new(Arc::new(array))
@@ -811,6 +816,7 @@ mod arrow {
         #[namespace = "array_f64"]
         fn values_ba(array: &ArrayRef, default: f64) -> Option<BigArray1<f64>>;
 
+        fn array_null(size: usize) -> ArrayRef;
         fn array_timestamp_ns_from_with_zone(v: Vec<i64>, zone: Option<String>) -> ArrayRef;
 
         fn array_string_from(v: Vec<String>) -> ArrayRef;

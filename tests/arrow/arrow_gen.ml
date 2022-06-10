@@ -223,6 +223,11 @@ open! Sexplib.Conv
     = "__ocaml_arrow_array_null_count"
   ;;
 
+  external array_null
+    : int -> array_ref
+    = "__ocaml_arrow_array_null"
+  ;;
+
   external array_timestamp_ns_from_with_zone
     : Int64.t array -> string option -> array_ref
     = "__ocaml_arrow_array_timestamp_ns_from_with_zone"
