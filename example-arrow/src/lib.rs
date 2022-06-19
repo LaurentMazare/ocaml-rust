@@ -581,20 +581,28 @@ mod arrow {
     }
 
     extern "Rust" {
-        // TODO: provide better scoping/module.
+        #[release_runtime_lock]
         fn file_reader(path: String) -> RustResult<FileReader>;
+        #[release_runtime_lock]
         fn file_reader_metadata_as_string(reader: &FileReader) -> RustResult<String>;
+        #[release_runtime_lock]
         fn file_reader_parquet_metadata(reader: &FileReader) -> RustResult<Metadata>;
+        #[release_runtime_lock]
         fn file_reader_schema(reader: &FileReader) -> RustResult<Schema>;
+        #[release_runtime_lock]
         fn file_reader_close(reader: &FileReader);
+        #[release_runtime_lock]
         fn get_record_reader(reader: &FileReader, batch_size: usize) -> RustResult<RecordReader>;
+        #[release_runtime_lock]
         fn get_record_reader_by_columns(
             reader: &FileReader,
             columns: Vec<usize>,
             batch_size: usize,
         ) -> RustResult<RecordReader>;
 
+        #[release_runtime_lock]
         fn record_reader_next(record_reader: &RecordReader) -> Option<RustResult<RecordBatch>>;
+        #[release_runtime_lock]
         fn record_reader_close(record_reader: &RecordReader);
 
         fn record_batch_create(columns: Vec<(String, ArrayRef)>) -> RustResult<RecordBatch>;
@@ -603,7 +611,10 @@ mod arrow {
         fn record_batch_num_rows(record_batch: &RecordBatch) -> usize;
         fn record_batch_num_columns(record_batch: &RecordBatch) -> usize;
         fn record_batch_column(record_batch: &RecordBatch, index: usize) -> ArrayRef;
+
+        #[release_runtime_lock]
         fn record_batch_write_parquet(record_batch: &RecordBatch, path: String) -> RustResult<()>;
+
         fn record_batch_slice(
             record_batch: &RecordBatch,
             offset: isize,
@@ -611,20 +622,29 @@ mod arrow {
         ) -> RecordBatch;
         fn record_batch_concat(batches: Vec<RecordBatch>) -> RustResult<RecordBatch>;
 
+        #[release_runtime_lock]
         fn writer_new(record_batch: &RecordBatch, path: String) -> RustResult<FileWriter>;
+        #[release_runtime_lock]
         fn writer_write(w: &FileWriter, record_batch: &RecordBatch) -> RustResult<()>;
+        #[release_runtime_lock]
         fn writer_close(file_writer: &FileWriter) -> RustResult<()>;
 
+        #[release_runtime_lock]
         fn csv_writer_new(path: String) -> RustResult<CsvFileWriter>;
+        #[release_runtime_lock]
         fn csv_writer_write(w: &CsvFileWriter, record_batch: &RecordBatch) -> RustResult<()>;
+        #[release_runtime_lock]
         fn csv_writer_close(file_writer: &CsvFileWriter);
 
+        #[release_runtime_lock]
         fn csv_reader_new(
             path: String,
             batch_size: usize,
             infer_size: Option<usize>,
         ) -> RustResult<CsvFileReader>;
+        #[release_runtime_lock]
         fn csv_reader_next(r: &CsvFileReader) -> Option<RustResult<RecordBatch>>;
+        #[release_runtime_lock]
         fn csv_reader_close(r: &CsvFileReader);
 
         fn array_data_type(array: &ArrayRef) -> DataType;
