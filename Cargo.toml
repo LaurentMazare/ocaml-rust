@@ -9,10 +9,10 @@ exclude = ["/example", "/gen", "/example-arrow"]
 
 [dependencies]
 ocaml-sys = "0.23.0"
-ocaml-boxroot-sys = "0.2.0"
+ocaml-boxroot-sys = "0.3.0"
 ocaml-rust-macro = { version = "0.0.1", path = "macro" }
 thiserror = "1"
-libc = "0.2.122"
+libc = "0.2.139"
 
 [workspace]
 members = ["example", "gen/cmd", "macro", "example-arrow"]

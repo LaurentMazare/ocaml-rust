@@ -670,9 +670,9 @@ dependencies = [
 
 [[package]]
 name = "ocaml-boxroot-sys"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5186393bfbee4ce2bc5bbb82beafb77e85c1d0a557e3cfc8c8a0d63d7845fed5"
+checksum = "0751001b9d2a77bbdb8f0bf79e40d2ade7937ae18ddc9ad3f0a62a4740f1d1eb"
 dependencies = [
  "cc",
 ]

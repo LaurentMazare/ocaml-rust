@@ -1,5 +1,3 @@
-static BOXROOT_SETUP: std::sync::Once = std::sync::Once::new();
-
 pub struct RootedValue<T>
 where
     T: 'static,
@@ -10,11 +8,8 @@ where
 
 impl<T> RootedValue<T> {
     pub fn create(v: ocaml_sys::Value) -> RootedValue<T> {
-        BOXROOT_SETUP.call_once(|| unsafe {
-            ocaml_boxroot_sys::boxroot_setup();
-        });
         RootedValue {
-            root: unsafe { ocaml_boxroot_sys::boxroot_create(v) },
+            root: unsafe { ocaml_boxroot_sys::boxroot_create(v).unwrap() },
             phantom_data: std::marker::PhantomData,
         }
     }
