@@ -160,7 +160,7 @@ where
     T: ToValue,
 {
     fn to_value(&self) -> ocaml_sys::Value {
-        T::to_value(&*self)
+        T::to_value(self)
     }
 }
 
